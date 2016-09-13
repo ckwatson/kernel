@@ -34,7 +34,7 @@ def equilibrate(input_model, progress_tick, in_conc = None, diag = False):
 
 
 
-def run_true_experiment(puzzle, condition, condition_path, progress_tick):
+def run_true_experiment(puzzle, condition, condition_path, progress_tick, stream = sys.stdout):
 	def show_all_concentrations():
 		stream.write("                    Update the concentration record of the whole lab:")
 		stream.write("                        ", end = "")
@@ -44,7 +44,7 @@ def run_true_experiment(puzzle, condition, condition_path, progress_tick):
 		for i in condition.molecule_concentrations.values():
 			stream.write(str(i)[:4], end = "\t")
 		stream.write("")
-	# need to replace with logging
+	
 	#sys.stdout = open(diag + "diagnostic_stdout_" + str(condition.reaction_temperature) + "_.dat", "w") if (temp_diag == True) else system_output
 	stream.write("            First, pre-equilibrate every reagent:")
 	# zero out all the condition objects molecule concentrations as a saftey measure
@@ -58,7 +58,7 @@ def run_true_experiment(puzzle, condition, condition_path, progress_tick):
 		reagent_conc_array = np.zeros((1,reagent_obj.number_of_species))
 		# we start with the concentrations defined by the user in the condition object they passed to us
 		reagent_conc_array[0][reagent_obj.coefficient_dict[reagent_name]] = condition.reagent_concentrations[reagent_name]
-		## need to replace with logging
+		#
 		#stream.write("Reagent temps: ", condition.reagent_temperatures)
 
 		# suppose the REAGENT is O2, then by itself in a canister or beaker it would actually be comprised
@@ -69,7 +69,7 @@ def run_true_experiment(puzzle, condition, condition_path, progress_tick):
 		if reagent_obj.number_of_species is 1:
 			# then directly add the reagents concentrations to their associated molecule concentrations
 			condition.molecule_concentrations[name] += condition.reagent_concentrations[reagent_name]
-			# need to replace with logging
+			
 			stream.write("                    This reagent only has one species so no pre-equilibration happened.")
 			stream.write("                    This reagent had a concentration of ", condition.reagent_concentrations[reagent_name])
 			show_all_concentrations()
@@ -81,23 +81,28 @@ def run_true_experiment(puzzle, condition, condition_path, progress_tick):
 		# how much of each species is created, consumed during dissociation/pre-equilibration
 		pre_equil_model = experiment(   reagent_obj, 
 										condition.reagent_temperatures[reagent_name], 
-										rxn_profile = reagent_conc_array
+										rxn_profile = reagent_conc_array,
+										stream = stream
 									)
 									
 		# actually preform the mathematical calculations
 		# (diagnostics) diag is an optional argument that if true prints all the output from the integrator inside the experiment object
 		# this is a lotttt of extra output
-		equilibrate(pre_equil_model, progress_tick, diag = False)
+		stream.write("			* reagent_obj.coefficient_dict:",reagent_obj.coefficient_dict)
+		stream.write("			* reagent_conc_array -- before:",reagent_conc_array)
 
+		equilibrate(pre_equil_model, progress_tick, diag = False)
+		stream.write("			* reagent_conc_array -- after:",pre_equil_model.reaction_profile[-1])
+		#stream.write(pre_equil_model.reaction_profile)
 		# finally after we have obtained the new equilibrated concentrations we place those in the condition object
 		for name, index in reagent_obj.coefficient_dict.items():
-			#stream.write(name, index, condition.molecule_concentrations[name], pre_equil_model.reaction_profile[-1][index], sep='  ')
-			condition.molecule_concentrations[name] += pre_equil_model.reaction_profile[-1][index]
-			#stream.write(name, index, condition.molecule_concentrations[name], pre_equil_model.reaction_profile[-1][index], sep='  ')
-
-		# need to replace with logging
+			concentration_of_this_species = pre_equil_model.reaction_profile[-1][index]
+			if np.isnan(concentration_of_this_species):
+				stream.write('                    [Warning] Concentration of '+name+' is NaN. Falling back to un-pre-equilibrated concentrations. This is a bug.')
+				concentration_of_this_species = reagent_conc_array[0][index]
+			condition.molecule_concentrations[name] += concentration_of_this_species
+		
 		# collect the equilibrated concentrations
-		stream.write("                    Concentrations at equilibrium:", pre_equil_model.reaction_profile[-1])
 		show_all_concentrations()
 		# we no longer need this obj
 		del pre_equil_model
@@ -112,7 +117,7 @@ def run_true_experiment(puzzle, condition, condition_path, progress_tick):
 	#stream.write("Conc array passed in: ", temp, '\n')
 
 	# this is the experiment object that represents the "actual reaction"
-	true_model = experiment(puzzle, condition.reaction_temperature, input_time = [0.0], rxn_profile = temp)
+	true_model = experiment(puzzle, condition.reaction_temperature, input_time = [0.0], rxn_profile = temp, stream = stream)
 	# now we perform the same mathematical operations as before, but this time we have all the molecules present instead of isolated reactions
 	stream.write("            Now we can finally let the actual reaction happen -- let's pour everything into the beaker:")
 	equilibrate(true_model, progress_tick, in_conc = condition.reagent_concentrations, diag = False)  # the magical math happens
@@ -125,22 +130,21 @@ def run_true_experiment(puzzle, condition, condition_path, progress_tick):
 	# so this is the only location where the condition path is used, and if we can wrap this in a fashion, or have the solution object store its 'location' then i can remove the condition paths from driver completely
 	written_data = np.transpose(np.column_stack([true_model.time_array, true_model.reaction_profile])) # input_output.write_ODE(condition.reaction_temperature, true_model.time_array, true_model.reaction_profile, data_file_name = os.path.join(condition_path, "plotData_t_"))
 
-	# need to replace with logging
+	
 	stream.write("                Reactant Rate Constants " + HANDY.np_repr(true_model.reactant_rate_constants)
-		+ "\n                Product  Rate Constants " + HANDY.np_repr(true_model.product_rate_constants)
-		+ "\n                Theoretical   K_eq  " + HANDY.np_repr(true_model.theoretical_Keq_array)
-		+ "\n                Experimental  K_eq  " + HANDY.np_repr(true_model.experimental_Keq_array)
-		)
+			+ "\n                 Product  Rate Constants " + HANDY.np_repr(true_model.product_rate_constants)
+			+ "\n                 Theoretical   K_eq  " + HANDY.np_repr(true_model.theoretical_Keq_array)
+			+ "\n                 Experimental  K_eq  " + HANDY.np_repr(true_model.experimental_Keq_array))
 	
 	#sys.stdout.close()
 	#sys.stdout = system_output if (temp_diag == True) else sys.stdout
 	del true_model
-	# need to replace with logging
+	
 	stream.write("            True model sucessfully constructed.")
 	return written_data
 ###################################
 
-def run_proposed_experiment(puzzle, condition, condition_path, progress_tick, solution, solution_path, written_true_data = None):
+def run_proposed_experiment(puzzle, condition, condition_path, progress_tick, solution, solution_path, written_true_data = None, stream = sys.stdout):
 	#sys.stdout = open(diag + "diagnostic_stdout_student_" + str(condition.reaction_temperature) + "_.dat", "w") if (temp_diag == True) else system_output
 
 	# load the species from the true model
@@ -150,7 +154,7 @@ def run_proposed_experiment(puzzle, condition, condition_path, progress_tick, so
 		data = fileIO.load_modelData(os.path.join(condition_path, "plotData_t_") + str(condition.reaction_temperature) + '_.dat')
 
 	# make the experiment object
-	proposed_model = experiment(solution, condition.reaction_temperature, input_time=data[0][:], rxn_profile=np.swapaxes(data[1::1][:], 0, 1))
+	proposed_model = experiment(solution, condition.reaction_temperature, input_time=data[0][:], rxn_profile=np.swapaxes(data[1::1][:], 0, 1), stream = stream)
 
 	try:
 		# try to find the rate constants
@@ -163,7 +167,7 @@ def run_proposed_experiment(puzzle, condition, condition_path, progress_tick, so
 
 		# if more than one reaction has forward and backward rate constants of negative value then crash
 		if(bad_rxn.size > 1):
-			# need to replace with logging
+			
 			stream.write("An issue has been detected. Reactions " 
 				+ str(bad_rxn + 1) 
 				+ " are unstable.\n Cannot proceed with user reaction, input new reaction.")
@@ -173,7 +177,7 @@ def run_proposed_experiment(puzzle, condition, condition_path, progress_tick, so
 			return False
 		# if only one reaction is 'bad' then try to remove it and solve again
 		elif(bad_rxn.size == 1):
-			# need to replace with logging
+			
 			stream.write("An issue has been detected. Reaction " 
 				+ str(bad_rxn[0] + 1) 
 				+ " is unstable. \n Trying to correct simulation by removing reaction.")
@@ -185,7 +189,7 @@ def run_proposed_experiment(puzzle, condition, condition_path, progress_tick, so
 
 			# if we fail again then crash
 			except HANDY.User as u_error:
-				# need to replace with logging
+				
 				stream.write("Another issue has been detected. Reaction " 
 					+ str(bad_rxn[0] + 1) 
 					+ " is unstable. \n Cannot proceed, crashing.")
@@ -205,7 +209,7 @@ def run_proposed_experiment(puzzle, condition, condition_path, progress_tick, so
 	stream.write(condition.molecule_concentrations)
 	for name, value in solution.coefficient_dict.items():
 		temp[value] = condition.molecule_concentrations[name]
-	# need to replace with logging	
+		
 	stream.write("            Concentrations: ", temp)
 	proposed_model.find_reaction_profile(input_concentration=temp, diagnostic_output=False)
 	proposed_model.remove_flat_region()
@@ -218,7 +222,7 @@ def run_proposed_experiment(puzzle, condition, condition_path, progress_tick, so
 	stream.write(str(proposed_model.theoretical_Keq_array))
 	stream.write(str(proposed_model.experimental_Keq_array))
 
-	# need to replace with logging
+	
 	stream.write("            Rate Constant array " + HANDY.np_repr(proposed_model.rate_constant_array)
 		+ "            Experimental  K_eq  " + HANDY.np_repr(proposed_model.experimental_Keq_array))
 
@@ -227,16 +231,16 @@ def run_proposed_experiment(puzzle, condition, condition_path, progress_tick, so
 	return written_data# ?
 
 	del proposed_model # speed up?
-	# need to replace with logging
+	
 	stream.write("            Successfully constructed proposed model.")
 
 
 # just a wrapper for backwards compatibility until i replace all the places its used in the code
 def drive_data(puzzle, puzzle_path, condition, condition_path, progress_tick, solution = None, solution_path = None, written_true_data = None):
-	system_output = sys.stdout
+	#system_output = sys.stdout
 	# if we are simulating the true_model then solution argument is none
 	if(solution == None):
-		return run_true_experiment(puzzle, condition, condition_path, progress_tick)
+		return run_true_experiment(puzzle, condition, condition_path, progress_tick, stream = stream)
 	else:
-		return run_proposed_experiment(puzzle, condition, condition_path, progress_tick, solution, solution_path, written_true_data)
+		return run_proposed_experiment(puzzle, condition, condition_path, progress_tick, solution, solution_path, written_true_data, stream = stream)
 

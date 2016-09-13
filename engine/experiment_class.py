@@ -20,7 +20,7 @@ from scipy.integrate import odeint, ode # solve differential rate equation, we w
 # this object represents a rxn/experiment, a mixing of beakers, production of some reactants
 class experiment():
 	__number_of_instances_of_self	= 0
-
+	stream = sys.stdout
 	# ODE solver parameters
 	abserr			  = 1.0e-8 # see documentation http://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.odeint.html
 	relerr			  = 1.0e-6 # see documentation ^ same as above
@@ -43,18 +43,19 @@ class experiment():
 	RATE_CONSTANT_EXTRACTION_START_POINT = 0.0
 	RATE_CONSTANT_EXTRACTION_END_POINT   = 12.0
 
-	def __init__(self, input_reaction_mechanism, input_temp, input_time = None, rxn_profile = None, Keq_threshold = None, mass_balance_threshold = None):
+	def __init__(self, input_reaction_mechanism, input_temp, input_time = None, rxn_profile = None, Keq_threshold = None, mass_balance_threshold = None, stream = sys.stdout):
+		self.stream = stream
 
 		# debugging,
-		#print("Type of reaction mechanism", type(input_reaction_mechanism))
-		#print("Input conc", rxn_profile[0][:])
+		#self.stream.write("Type of reaction mechanism", type(input_reaction_mechanism))
+		#self.stream.write("Input conc", rxn_profile[0][:])
 
 		experiment.__number_of_instances_of_self += 1 # count the creation of this object
 
 		# see the following hyperlink for documentation on this string formatting:
 		# https://docs.python.org/release/3.0.1/library/string.html#formatstrings
 		formatting_string = "I'm born, wahoo!   My temperature is: {0:>8.2F}\N{DEGREE SIGN}C  {1:>8.2F}\N{DEGREE SIGN}K"
-		#print(formatting_string.format(input_temp, input_temp + experiment.TEMPERATURE_CONVERSION_FACTOR))
+		#self.stream.write(formatting_string.format(input_temp, input_temp + experiment.TEMPERATURE_CONVERSION_FACTOR))
 
 		# required puzzle variables
 		self.species_array				  = input_reaction_mechanism.get_name_set()
@@ -66,8 +67,8 @@ class experiment():
 		self.reactant_coefficient_array	 = input_reaction_mechanism.reactant_coefficient_array
 		self.product_coefficient_array	  = input_reaction_mechanism.product_coefficient_array
 
-		# need to replace with logging
-		#print(  "\nThe list of species: "				   + str(self.species_array),
+		
+		#self.stream.write(  "\nThe list of species: "				   + str(self.species_array),
 		#		"\nThe number of reactions: "			   + str(self.number_of_reactions),
 		#		"\nThe number of species: "				 + str(self.number_of_species),
 		#		"\nThe coefficient array: \n"			   + str(self.coefficient_array),
@@ -85,8 +86,8 @@ class experiment():
 		# the Es, Ea, Er, Ep matrices
 		# Size of (self.number_of_species)
 		self.species_energy_array	 = input_reaction_mechanism.get_energy_set()
-		# need to replace with logging
-		#print("energy array", self.species_energy_array)
+		
+		#self.stream.write("energy array", self.species_energy_array)
 		self.activated_energy_array   = (input_reaction_mechanism.transition_state_energies) if ('transition_state_energies' in input_reaction_mechanism.__dict__) else None
 		self.reactant_energy_array	= None
 		self.product_energy_array	 = None
@@ -107,8 +108,8 @@ class experiment():
 		# np.zeros(self.time_array.size[0], number_of_species)
 		self.reaction_profile 	= np.array([[0.0 for iterator in self.species_array]]) if rxn_profile is None else rxn_profile
 
-		# need to replace with logging
-		#print("conc array ", self.reaction_profile)
+		
+		#self.stream.write("conc array ", self.reaction_profile)
 
 		# all experiments require an array of transition state energies which is stored in self.activated_energy_array; these values are either given, in the case of a 'true model', or they are calculated, in the case of a 'proposed model'
 		# from this the energies of the reactants and the products can be calculated
@@ -135,16 +136,16 @@ class experiment():
 	# 
 	# I'm not 100% sure why i dont have an add_rxn function at the moment... I will find out in the future
 	def remove_rxn(self, reaction_number, axis=0):
-		# need to replace with logging
-		#print("Before delete", self.coefficient_array.shape, self.reactant_coefficient_array.shape, self.product_coefficient_array.shape) 
+		
+		#self.stream.write("Before delete", self.coefficient_array.shape, self.reactant_coefficient_array.shape, self.product_coefficient_array.shape) 
 		
 		# remove the associated data
 		self.coefficient_array		  = np.delete(self.coefficient_array,			 reaction_number, axis=0)
 		self.reactant_coefficient_array = np.delete(self.reactant_coefficient_array,	reaction_number, axis=0)
 		self.product_coefficient_array  = np.delete(self.product_coefficient_array,	 reaction_number, axis=0)
 		
-		# need to replace with logging
-		#print("After delete", self.coefficient_array.shape, self.reactant_coefficient_array.shape, self.product_coefficient_array.shape)
+		
+		#self.stream.write("After delete", self.coefficient_array.shape, self.reactant_coefficient_array.shape, self.product_coefficient_array.shape)
 		
 		# recalculate the energies of the reactants and the products
 		# this is necessary to "refill/rebuild" the self.reactant_energy_array and self.product_energy_array so that they are the appropriate size
@@ -152,13 +153,13 @@ class experiment():
 		self.find_Er()
 		self.find_Ep()
 		
-		# need to replace with logging
-		#print("Had to delete reaciton " + str(reaction_number+1))
+		
+		#self.stream.write("Had to delete reaciton " + str(reaction_number+1))
 
 	# any code that happens just before the object is deleted
 	def __del__(self):
 		experiment.__number_of_instances_of_self -= 1
-		#print("this is the thing I do after I'm dead")
+		#self.stream.write("this is the thing I do after I'm dead")
 
 	# this method  is invoked when str() is called on an experiment_class object
 	def __str__(self):
@@ -212,8 +213,8 @@ class experiment():
 		self.find_theoretical_Keq_array()
 
 		# diagnostics
-		# need to replace with logging
-		#print( "\nEs " + HANDY.np_repr(self.species_energy_array)
+		
+		#self.stream.write( "\nEs " + HANDY.np_repr(self.species_energy_array)
 		#	 + "\nEr " + HANDY.np_repr(self.reactant_energy_array)
 		#	 + "\nEp " + HANDY.np_repr(self.product_energy_array)
 		#	 + "\nEa " + HANDY.np_repr(self.activated_energy_array)
@@ -247,7 +248,7 @@ class experiment():
 		# take product of ([A]^a * [B]^b * ... etc) for each elementary reaction
 		self.experimental_Keq_array = np.prod(np.power(concentrations, self.coefficient_array), axis=1)
 		self.experimental_Keq_array = np.nan_to_num(self.experimental_Keq_array)
-		#print("\nExperimental Keq " + HANDY.np_repr(self.experimental_Keq_array) + "\n")	# need to replace with logging
+		#self.stream.write("\nExperimental Keq " + HANDY.np_repr(self.experimental_Keq_array) + "\n")	
 		return True
 
 	# solves the coupled ode's, effectively 'runs' the experiment
@@ -274,8 +275,8 @@ class experiment():
 		def condition_elementary_diagnostic(conc, time):
 			dYdt = condition_elementary(conc, time)
 
-			# need to replace with logging
-			#print("\nTime: " + str(time) + "		 " + "Time: " + str(self.time_slicee[self.slice_counter])
+			
+			#self.stream.write("\nTime: " + str(time) + "		 " + "Time: " + str(self.time_slicee[self.slice_counter])
 			#	+ "\nConc: " + HANDY.np_repr(conc)
 			#	+ "\nRate: " + HANDY.np_repr(reaction_array)
 			#	+ "\ndYdt: " + HANDY.np_repr(dYdt)
@@ -299,12 +300,12 @@ class experiment():
 			ode_conc = self.reaction_profile[0,:]
 			self.reaction_profile = None
 
-		# need to replace with logging
-		#print(  "\nThe initial concentration: "			 + str(ode_conc),
+		
+		#self.stream.write(  "\nThe initial concentration: "			 + str(ode_conc),
 		#		"\n")
 
 		# the 'calculation' loop
-		print("					Calculating... ", end = "")
+		self.stream.write("				Calculating... ", end = "")
 		for current_Keq_step in range(1, experiment.max_Keq_steps+1):
 
 			# if the time_array is not empty then we want to continue from the end of it, otherwise start at 0
@@ -315,19 +316,20 @@ class experiment():
 			# solve the couple ode's, with or with extra output
 			if(diagnostic_output):
 				ode_solution, infodict = odeint(condition_elementary_diagnostic, ode_conc, self.time_slicee, full_output = diagnostic_output, atol=experiment.abserr, rtol=experiment.relerr, ixpr = True)
-				#input_output.diagnose_ODE(self.temp, infodict, self.temperature)
 			else:
 				ode_solution = odeint(condition_elementary, ode_conc, self.time_slicee, atol=experiment.abserr, rtol=experiment.relerr, ixpr = True)
-
+			if np.all(np.isnan(ode_solution[-1])):
+				self.stream.write('[ERROR] Concentrations went all NaN.')#?!?!!?!?!?!?!?
+				raise ValueError
 			# only compare the previous Keq with the current Keq if we have a previous Keq
 			if (previous_ln_Keq is not None):
-				#print("\n\n=============================== Not the last Keq ===============================") # need to replace with logging
+				#self.stream.write("\n\n=============================== Not the last Keq ===============================") 
 				# store the 'step' that we just took in the experiment object's private members
 				self.time_array	   = np.concatenate((self.time_array, self.time_slicee), axis=0)
 				self.reaction_profile = np.concatenate((self.reaction_profile, ode_solution), axis=0)
 
-				# need to replace with logging
-				#print(str(self.reaction_profile.shape)
+				
+				#self.stream.write(str(self.reaction_profile.shape)
 				#	+ "\n" + HANDY.np_repr(self.time_slicee)
 				#	+ "\n" + HANDY.np_repr(ode_solution)
 				#	)
@@ -338,19 +340,19 @@ class experiment():
 
 				# compare the last and the current Keq 
 				if(np.all(np.fabs(current_ln_Keq - previous_ln_Keq) < np.asarray([self.Keq_threshold for x in range(self.number_of_reactions)]))):
-					print('['+str(int(start_time/experiment.step_size))+'] -- close enough!', end = "")
+					self.stream.write(''+str(int(start_time))+' -- close enough!', end = "")
 					break
 				else:
 					previous_ln_Keq = current_ln_Keq
-					print('['+str(int(start_time/experiment.step_size))+']', end = "") # need to replace with logging
+					self.stream.write(''+str(int(start_time))+'...', end = "") # start_time -> start_time/experiment.step_size
 
 			# we need to run at least one more time before we can check conditions
 			else:
-				#print("\n\n=============================== First Keq ===============================") # need to replace with logging
+				#self.stream.write("\n\n=============================== First Keq ===============================") 
 				# store the 'step' that we just took in the experiment object's private members				
 				self.time_array	   = self.time_slicee
 				self.reaction_profile = ode_solution
-				#print(str("") + HANDY.np_repr(self.time_slicee) + "\n" + HANDY.np_repr(ode_solution)) # need to replace with logging
+				#self.stream.write(str("") + HANDY.np_repr(self.time_slicee) + "\n" + HANDY.np_repr(ode_solution)) 
 
 				# calculate the Keq array and take the log
 				self.find_experimental_Keq_array()
@@ -360,8 +362,8 @@ class experiment():
 			ode_conc = self.reaction_profile[-1,:]
 		# if we don't break from the loop then we didn't reach a 'plateau' as defined by our 
 		else:
-			HANDY.warning("					We reached our max_Keq_steps without finding an 'appropriate' Keq") # need to replace with logging
-		print('')
+			HANDY.warning("				We reached our max_Keq_steps without finding an 'appropriate' Keq") 
+		self.stream.write('')
 
 		return True
 
@@ -376,8 +378,8 @@ class experiment():
 		try:
 			rxn_rate = self.reaction_rate_function(conc)
 		except:
-			# # need to replace with logging
-			# print("\n\n=============================== Error occured while trying to find the reaction rate ===============================\n"
+			# 
+			# self.stream.write("\n\n=============================== Error occured while trying to find the reaction rate ===============================\n"
 			# 	+ "\nThe conc shape" + str(conc.shape)
 			# 	+ "\nThe conc vals" + HANDY.np_repr(conc)
 			# 	+ "\nThe coef(f) shape" + str(self.reactant_coefficient_array.shape)
@@ -389,7 +391,7 @@ class experiment():
 			# 	+ "\nThe rate(b) shape" + str(self.product_rate_constants.shape)
 			# 	+ "\nThe rate(b) vals" + HANDY.np_repr(self.product_rate_constants),
 			# 	file=sys.stderr)
-			# print("Error occured while trying to find the reaction rate") # need to replace with logging
+			# self.stream.write("Error occured while trying to find the reaction rate") 
 			exit(0)
 		else:
 			return rxn_rate
@@ -401,11 +403,7 @@ class experiment():
 	def get_reaction_profile(self, slice = (None, None)):
 		# if slice input was provided we return a specific section of the reaction_profile
 		if(slice != (None, None)):
-			print('='*20)
-			print('slice:', slice)
-			print('self.time_array[0]:', self.time_array[0])
-			print('self.time_array[-1]:', self.time_array[-1])
-			print('='*20)
+			self.stream.write('             Slicing the '+str(slice[0])+'~'+str(slice[1])+' part from the time-array that has a length of '+str(self.time_array[-1])+' .')
 			# check that the slicing bounds are within range
 			# assert that both start-end are greater or equal to the first time value
 			# assert that start is less than or equal to the final time value
@@ -422,8 +420,8 @@ class experiment():
 			# np.compress needs to be applied to each axis seperately to create the slice
 			sliced_reaction_profile = np.zeros((np.compress(condition, self.reaction_profile[:, 0]).shape[0], self.number_of_species))
 			for axis in range(self.number_of_species):
-				# need to replace with logging
-				#print(axis, sliced_reaction_profile.shape[0], sliced_reaction_profile.shape[1], self.reaction_profile.shape[0], self.reaction_profile.shape[1])
+				
+				#self.stream.write(axis, sliced_reaction_profile.shape[0], sliced_reaction_profile.shape[1], self.reaction_profile.shape[0], self.reaction_profile.shape[1])
 				sliced_reaction_profile[:, axis] = np.compress(condition, self.reaction_profile[:, axis])
 
 			return sliced_reaction_profile
@@ -462,25 +460,25 @@ class experiment():
 		# get the concentration values and trim the dSdt to match the sample size
 		conc_x = self.get_reaction_profile((experiment.RATE_CONSTANT_EXTRACTION_START_POINT, experiment.RATE_CONSTANT_EXTRACTION_END_POINT))
 		
-		# need to replace with logging
-		print("Conc shape: " + str(conc_x.shape)
-		 	 +"\nConc vals " + HANDY.np_repr(conc_x), file=sys.stderr)
+		
+		self.stream.write("Conc shape: " + str(conc_x.shape)
+		 	 +"\nConc vals " + HANDY.np_repr(conc_x))#, file=sys.stderr)
 		
 		# trim the first and last element off the concentration so it has the same length as the dSdt
 		slice_of_conc   = np.resize(conc_x, (conc_x.shape[0]-2, 1, self.number_of_species))
 		
-		# need to replace with logging
-		print("Conc shape after slicing: " + str(slice_of_conc.shape)
-		 	 +"\nConc vals " + HANDY.np_repr(slice_of_conc), file=sys.stderr)
+		
+		self.stream.write("Conc shape after slicing: " + str(slice_of_conc.shape)
+		 	 +"\nConc vals " + HANDY.np_repr(slice_of_conc))#, file=sys.stderr)
 
 		# previous dSdt was a two dimensional tensor, now we make it a three dimensional tensor just 'pushing' the second dimension into the third, we do this so it is properly sized for calculations occuring below
 		dSdt			= np.resize(dSdt, (slice_of_conc.shape[0], 1, self.number_of_species))
 		
-		# need to replace with logging
-		# print("Coef(f) shape: " + str(self.reactant_coefficient_array.shape)
+		
+		# self.stream.write("Coef(f) shape: " + str(self.reactant_coefficient_array.shape)
 		# 	 +"\nCoef(f) vals " + HANDY.np_repr(self.reactant_coefficient_array)
 		# 	 +"\nCoef(b) shape" + str(self.product_coefficient_array.shape)
-		# 	 +"\nCoef(b) vals " + HANDY.np_repr(self.product_coefficient_array), file=sys.stderr)
+		# 	 +"\nCoef(b) vals " + HANDY.np_repr(self.product_coefficient_array))#, file=sys.stderr)
 
 		# we calculate the Keq based on experimental definition, concentration ratios on the 'plateau'
 		self.find_experimental_Keq_array()
@@ -493,20 +491,20 @@ class experiment():
 		Q = np.subtract(			np.prod(np.power(slice_of_conc, self.reactant_coefficient_array), axis = 2),
 						np.divide(  np.prod(np.power(slice_of_conc, self.product_coefficient_array ), axis = 2), exKeq[:]))
 
-		# need to replace with logging
-		# print(exKeq.shape, Q.shape, self.number_of_reactions ,self.reactant_coefficient_array.shape, self.product_coefficient_array.shape)
+		
+		# self.stream.write(exKeq.shape, Q.shape, self.number_of_reactions ,self.reactant_coefficient_array.shape, self.product_coefficient_array.shape)
 		# reshape, and handling any NaN's
 		Q = np.reshape(Q, (-1, self.number_of_reactions, 1))
 		Q = np.nan_to_num(Q)
-		# need to replace with logging
-		print('Q.shape: ' + str(Q.shape))
+		
+		self.stream.write('Q.shape: ' + str(Q.shape))
 
 		# the next part is our matrix based solution to determining rate constants, the problem is that we don't have a handle on the unqiue solutions yet, i still need to implment the zero vector isolation removal function	
 		# read the documentation here to explain what A,M,inverse M and so forth are doing
 
 		# create our A matrix
 		A = np.multiply(np.reshape(self.coefficient_array, (1, self.number_of_reactions, self.number_of_species)), Q)
-		print("A.shape: " + str(A.shape)) # need to replace with logging
+		self.stream.write("A.shape: " + str(A.shape)) 
 
 		# construct the M matrix
 		M = np.matrix(np.zeros((self.number_of_reactions, self.number_of_reactions)), dtype=float)
@@ -523,29 +521,29 @@ class experiment():
 			X[a] = np.sum(dSdt[:,0,:] * A[:,a,:])
 			#X[a] = np.sum(np.sum((dSdt[:,0,:] * A[:,a,:]), axis = 1), axis = 0)
 
-		print("M: \n" + str(M))# need to replace with logging
+		self.stream.write("M: \n" + str(M))
 		# calculate the eigenvalues and eigenvectors
 		if(np.all(np.transpose(M) == M)):
-			print("			We just confirmed that M is symmetric.") # need to replace with logging
+			self.stream.write("			We just confirmed that M is symmetric.") 
 			e_values,  e_vectors  = np.linalg.eigh(M)
 		else:
-			print("			Uh Oh, M doesn't seem to be symmetric, do we have a problem?") # need to replace with logging
+			self.stream.write("			Uh Oh, M doesn't seem to be symmetric, do we have a problem?") 
 			e_values, e_vectors = np.linalg.eig(M)
 
-		# need to replace with logging
-		print("\nEigenvectors\n" + str(e_vectors)
+		
+		self.stream.write("\nEigenvectors\n" + str(e_vectors)
 		 	+ "\nEigenvalues\n"  + str(e_values))
 
 
 		# check if eigenvectors are singular
 		# if not then we should be able to check if they are correct
 		if(np.linalg.det(e_vectors) == 0):
-			# need to replace with logging
-			print("			P is singular, (determinant = 0)")
+			
+			self.stream.write("			P is singular, (determinant = 0)")
 		else:
 			temp = e_vectors*np.transpose(e_vectors)
-			# need to replace with logging
-			print("			We check that P-1AP = Eigenvalues"
+			
+			self.stream.write("			We check that P-1AP = Eigenvalues"
 				+"\n" + str(np.diag(np.linalg.inv(e_vectors)*M*e_vectors))
 				+"\n" + "Check e_vectors*transpose(e_vectors) = I (the identity matrix)"
 				+"\n" + str(temp))
@@ -554,8 +552,8 @@ class experiment():
 		# calculate the inverse of the M matrix
 		M_inverse = np.matrix(np.zeros((self.number_of_reactions, self.number_of_reactions)), dtype=float)
 		masked_e_values = ma.masked_less(e_values, experiment.EIGENVALUE_TOLERANCE) # mask any values less than our tolerance parameter
-		# need to replace with logging
-		# print("Eval shape: " + str(e_values.shape)
+		
+		# self.stream.write("Eval shape: " + str(e_values.shape)
 		# 	+ "\n Evals: " + HANDY.np_repr(e_values)
 		# 	+ "\n Masked eval shape: " + str(masked_e_values.shape)
 		# 	+ "\n Masked evals: " + HANDY.np_repr(masked_e_values))
@@ -570,13 +568,13 @@ class experiment():
 		b_guess  = (f_guess / self.experimental_Keq_array[:, np.newaxis])
 		self.reactant_rate_constants = np.nan_to_num(np.array([f_guess[i][0] for i in range(len(f_guess))]))
 		self.product_rate_constants = np.nan_to_num(np.array([b_guess[i][0] for i in range(len(b_guess))]))
-		# need to replace with logging
-		print("			reaction: ", self.reactant_rate_constants,
+		
+		self.stream.write("			reaction: ", self.reactant_rate_constants,
 			"\n			product: ", self.product_rate_constants)
 
 		self.rate_constant_array = np.concatenate((f_guess, b_guess), axis = 1)
-		# need to replace with logging
-		print("			Estimated Reaction Rate Constants: \n" + str(self.rate_constant_array))
+		
+		self.stream.write("			Estimated Reaction Rate Constants: \n" + str(self.rate_constant_array))
 
 		# now we check for negative rate constants
 		check = np.all(np.less(self.rate_constant_array, 0.0), axis = 1)
@@ -587,15 +585,15 @@ class experiment():
 		return self.rate_constant_array
 
 	def remove_flat_region(self,threshold = 0.0000000000001):
-		#print('reaction_profile shape:',self.reaction_profile.shape)
+		#self.stream.write('reaction_profile shape:',self.reaction_profile.shape)
 		reaction_profile_sampled = self.reaction_profile[::self.reaction_profile.shape[0]/20]
-		#print('reaction_profile_sampled shape:',reaction_profile_sampled.shape)
+		#self.stream.write('reaction_profile_sampled shape:',reaction_profile_sampled.shape)
 		for i in range(1,reaction_profile_sampled.shape[0]):
 			this_line = reaction_profile_sampled[i]
 			prev_line = reaction_profile_sampled[i-1]
 			if all(np.absolute(this_line-prev_line) < threshold):
 				break
-		print('					Concentrations all approximately reach equilibrium at',i/reaction_profile_sampled.shape[0]*100,'% of calculated length.')
+		self.stream.write('				Concentrations all approximately reach equilibrium at',i/reaction_profile_sampled.shape[0]*100,'% of calculated length.')
 		#time_array
 		self.time_array = self.time_array[:self.time_array.shape[0]/500*i]
 		self.reaction_profile = self.reaction_profile[:self.reaction_profile.shape[0]/500*i]
@@ -603,7 +601,7 @@ class experiment():
 
 
 if __name__ == '__main__':
-	print("succesfully imported experiment_class")
+	self.stream.write("succesfully imported experiment_class")
 
 
 
