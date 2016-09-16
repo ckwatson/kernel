@@ -139,6 +139,10 @@ class experiment():
 		self.find_Er()
 		self.find_Ep()
 
+        #### possible diagnostic checks ####       
+        # make sure that none of the energies are NaN or +/- infinity
+        assert(np.all(np.isfinite(self.species_energy_array)))
+
 	# an experiment object can represent a "true/real world" experiment, or a "solution/proposed/conceptual" experiment
 	# a conceptual experiment has the need to add or remove elementary reactions from the experiment object
 	# 
@@ -326,9 +330,6 @@ class experiment():
 				ode_solution, infodict = odeint(condition_elementary_diagnostic, ode_conc, self.time_slicee, full_output = diagnostic_output, atol=experiment.abserr, rtol=experiment.relerr, ixpr = True)
 			else:
 				ode_solution = odeint(condition_elementary, ode_conc, self.time_slicee, atol=experiment.abserr, rtol=experiment.relerr, ixpr = True)
-			if np.all(np.isnan(ode_solution[-1])):
-				logger.error('Concentrations went all NaN.')#?!?!!?!?!?!?!?
-				raise ValueError
 			# only compare the previous Keq with the current Keq if we have a previous Keq
 			if (previous_ln_Keq is not None):
 				#logger.info("\n\n=============================== Not the last Keq ===============================") 
