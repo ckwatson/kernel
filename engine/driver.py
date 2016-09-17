@@ -4,7 +4,7 @@
 """Solve the equilibrium ode"""
 
 # These modules are used to parse arguments
-import sys, os, logging, colorlog
+import sys, os, logging
 
 # These are the programs modules
 # from . import input_output

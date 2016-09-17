@@ -3,7 +3,7 @@
 #
 """module for the class experiment"""
 
-import sys, logging, colorlog
+import sys, logging
 import numpy as np
 import numpy.ma as ma
 from . import handy_functions as HANDY
