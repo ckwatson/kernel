@@ -75,13 +75,16 @@ def sub_plots(Temperature, plottingDict, condition_fileName, solution_fileName, 
 
     sub_combined = combined.add_subplot(111, title ='Combined True Profile', xlabel='time', ylabel='Concentration')
     
-    #pre-cache x-datapoints for 2 models:
+    if not if_userModel_failed:
+        logger.info('            Aligning shapes of userDataSet and trueDataSet.')
+        time_limit = min(true_data.shape[1], user_data.shape[1])        # find the shortest dataset among these two
+        user_data = user_data[:,:time_limit]                            # if the userDataSet is longer, truncate it to match the length of the trueDataSet 
+        true_data = true_data[:,:time_limit]                            # vice-versa
+        user_data_sampled = sampler(user_data)                          # now that the shapes of the two datasets are aligned, we can sample them
+        data_x_user = user_data_sampled[0,:]                            # pre-cache x-datapoints for userDataSet
     true_data_sampled = sampler(true_data)
     data_x_true = true_data_sampled[0,:]
     logger.info("            Lossy-compressing true_data by selecting only "+str(newSize)+' items, which means a span of every '+str(true_data.shape[1]/newSize)+' items.\n            The true_data is compressed from '+str(true_data.shape)+' to '+str(true_data_sampled.shape)+'.')
-    if not if_userModel_failed:
-        user_data_sampled = sampler(user_data)
-        data_x_user = user_data_sampled[0,:]
     logger.info("            Drawing curves for:")
     #now for every species to be plotted:
     for plot_info, (name, location) in enumerate(plottingDict.items(), start=1):

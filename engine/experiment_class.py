@@ -593,7 +593,7 @@ class experiment():
 
 		return self.rate_constant_array
 
-	def remove_flat_region(self,threshold = 0.0000000000001):
+	def remove_flat_region(self,threshold = 0.000000000000001):
 		#logger.info('reaction_profile shape:',self.reaction_profile.shape)
 		reaction_profile_sampled = self.reaction_profile[::self.reaction_profile.shape[0]/20]
 		#logger.info('reaction_profile_sampled shape:',reaction_profile_sampled.shape)
@@ -602,7 +602,7 @@ class experiment():
 			prev_line = reaction_profile_sampled[i-1]
 			if all(np.absolute(this_line-prev_line) < threshold):
 				break
-		logger.info('				Concentrations all approximately reach equilibrium at '+str(i/reaction_profile_sampled.shape[0]*100)+'% of calculated length.')
+		logger.info('				Concentrations all approximately reach equilibrium at '+str(i/reaction_profile_sampled.shape[0]*100)+'% of calculated length (time-step: '+str(i)+').')
 		#time_array
 		self.time_array = self.time_array[:self.time_array.shape[0]/500*i]
 		self.reaction_profile = self.reaction_profile[:self.reaction_profile.shape[0]/500*i]
