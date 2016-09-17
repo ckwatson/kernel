@@ -60,14 +60,14 @@ def sub_plots(Temperature, plottingDict, condition_fileName, solution_fileName, 
             logger.info('            (ii) Data of user model, but it failed according to memory cache.')
         else:
             logger.info('            (ii) Data of user model, from memory cache.')
-            solu_data = written_user_data
+            user_data = written_user_data
     else: #we have to use data from file now...
         if_userModel_failed = os.path.isfile(solution_fileName+'_Failed') #heck whether this user model is okay, by checking the flag file.
         if if_userModel_failed:
             logger.info('            (ii) Data of user model, but it failed according to file stored.')
         else:
             logger.info('            (ii) Data of user model, from file stored.')
-            solu_data = fileIO.load_modelData(solution_fileName + '_.dat')
+            user_data = fileIO.load_modelData(solution_fileName + '_.dat')
         # need to replace with logging
     logger.info("        (b) draw the plots:")
 
@@ -80,8 +80,8 @@ def sub_plots(Temperature, plottingDict, condition_fileName, solution_fileName, 
     data_x_true = true_data_sampled[0,:]
     logger.info("            Lossy-compressing true_data by selecting only "+str(newSize)+' items, which means a span of every '+str(true_data.shape[1]/newSize)+' items.\n            The true_data is compressed from '+str(true_data.shape)+' to '+str(true_data_sampled.shape)+'.')
     if not if_userModel_failed:
-        solu_data_sampled = sampler(solu_data)
-        data_x_solu = solu_data_sampled[0,:]
+        user_data_sampled = sampler(user_data)
+        data_x_user = user_data_sampled[0,:]
     logger.info("            Drawing curves for:")
     #now for every species to be plotted:
     for plot_info, (name, location) in enumerate(plottingDict.items(), start=1):
@@ -94,10 +94,10 @@ def sub_plots(Temperature, plottingDict, condition_fileName, solution_fileName, 
             sub_combined.  plot(data_x_true, data_y_this, colour[plot_info+2], label='True ' + '[' + name + ']', linestyle="-")
         # then user model:
         if not if_userModel_failed: 
-            data_y_this = solu_data_sampled[location+1,:]
+            data_y_this = user_data_sampled[location+1,:]
             if not (if_SkipDrawingSpeciesWithZeroConcentrations and not any(y!=0 for y in data_y_this)):
-                sub_individual.plot(data_x_solu, data_y_this, colour[          2], label='User ' + '[' + name + ']', linestyle="--")
-                sub_combined.plot  (data_x_solu, data_y_this, colour[plot_info+2], label='User ' + '[' + name + ']', linestyle="--")
+                sub_individual.plot(data_x_user, data_y_this, colour[          2], label='User ' + '[' + name + ']', linestyle="--")
+                sub_combined.plot  (data_x_user, data_y_this, colour[plot_info+2], label='User ' + '[' + name + ']', linestyle="--")
         #sub_individual.legend()
     sub_combined.legend()
     logger.info("        (c) Save plots to file: [Individual] ")
