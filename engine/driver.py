@@ -14,7 +14,6 @@ import numpy as np
 
 # Initialize logger:
 logger = logging.getLogger(__name__)        # tell the program to send messages on its own behalf.
-logger.setLevel(logging.DEBUG)              # There are five levels of logging (in ascending order): DEBUG, INFO, WARNING, ERROR and CRITICAL. Setting level to INFO would show messages from INFO, WARNING, ERROR and CRITICAL.
 
 temp_diag = True
 diag  = os.path.join("Diagnose" + os.sep)

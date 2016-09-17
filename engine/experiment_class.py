@@ -19,7 +19,6 @@ from scipy.integrate import odeint, ode # solve differential rate equation, we w
 
 # Initialize logger:
 logger = logging.getLogger(__name__)        # tell the program to send messages on its own behalf.
-logger.setLevel(logging.DEBUG)              # There are five levels of logging (in ascending order): DEBUG, INFO, WARNING, ERROR and CRITICAL. Setting level to INFO would show messages from INFO, WARNING, ERROR and CRITICAL.
 
 # this object represents a rxn/experiment, a mixing of beakers, production of some reactants
 class experiment():
