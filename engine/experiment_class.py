@@ -139,9 +139,9 @@ class experiment():
 		self.find_Er()
 		self.find_Ep()
 
-        #### possible diagnostic checks ####       
-        # make sure that none of the energies are NaN or +/- infinity
-        assert(np.all(np.isfinite(self.species_energy_array)))
+		#### possible diagnostic checks ####       
+		# make sure that none of the energies are NaN or +/- infinity
+		assert(np.all(np.isfinite(self.species_energy_array)))
 
 	# an experiment object can represent a "true/real world" experiment, or a "solution/proposed/conceptual" experiment
 	# a conceptual experiment has the need to add or remove elementary reactions from the experiment object
