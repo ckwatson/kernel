@@ -562,7 +562,7 @@ class experiment():
 		# 	+ "\n Masked evals: " + HANDY.np_repr(masked_e_values))
 		for a in range(self.number_of_reactions):
 			for b in range(self.number_of_reactions):
-				M_inverse[a,b] = np.nan_to_num(np.sum(np.divide(np.multiply(e_vectors[a,:], e_vectors[b,:]), masked_e_values[:])))
+				M_inverse[a,b] = np.nan_to_num(np.float_(np.sum(np.divide(np.multiply(e_vectors[a,:], e_vectors[b,:]), masked_e_values[:]))))
 			# for b
 		# for a
 
