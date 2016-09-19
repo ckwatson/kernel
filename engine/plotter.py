@@ -71,9 +71,11 @@ def sub_plots(Temperature, plottingDict, condition_fileName, solution_fileName, 
     
     if not if_userModel_failed:
         logger.info('            Aligning shapes of userDataSet and trueDataSet.')
-        time_limit = min(true_data.shape[1], user_data.shape[1])        # find the shortest dataset among these two
-        user_data = user_data[:,:time_limit]                            # if the userDataSet is longer, truncate it to match the length of the trueDataSet 
-        true_data = true_data[:,:time_limit]                            # vice-versa
+        if(true_data.shape[1] < user_data.shape[1]):                    # if the trueDataSet is shorter, extend it to match the length of the userDataSet
+            length_difference = user_data.shape[1] - true_data.shape[1]
+            true_data = np.append(true_data, np.repeat(true_data[:,-1].reshape((6,1)), length_difference, axis=1), axis=1)
+        elif(true_data.shape[1] > user_data.shape[1]):
+            true_data = true_data[:,:user_data.shape[1]]                # if the trueDataSet is longer, truncate it to match the length of the userDataSet 
         user_data_sampled = sampler(user_data)                          # now that the shapes of the two datasets are aligned, we can sample them
         data_x_user = user_data_sampled[0,:]                            # pre-cache x-datapoints for userDataSet
     true_data_sampled = sampler(true_data)
