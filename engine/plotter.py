@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)        # tell the program to send messages 
 colour = [0, 'b', 'g', 'r', 'c', 'm', 'y', 'k', '1', '0.75', '0.65', '0.55', '0.45', '0.35', '0.25', '0.25', '0.15']
 if_SkipDrawingSpeciesWithZeroConcentrations = True
 newSize = 100
-sampler = lambda array: array[:,::array.shape[1]/newSize]
+sampler = lambda array: array[:,::array.shape[1]//newSize]
 def fake_writer(plot):
     '''this function tricks matplotlib into writing figure into memory instead of an actual file on disk.'''
     buf = io.BytesIO()

@@ -248,7 +248,7 @@ class experiment():
 	# the Keq can be determined by a ratio of concentrations of species when the reaction profile has reached a 'plateau'
 	def find_experimental_Keq_array(self):
 		# select a point in the reaction profile which is approximately the begining of the 'plateau'
-		initial_timestep = np.rint(self.reaction_profile.shape[0] * experiment.EXPERIMENTAL_KEQ_SAMPLING_RANGE)
+		initial_timestep = np.int16(self.reaction_profile.shape[0] * experiment.EXPERIMENTAL_KEQ_SAMPLING_RANGE)
 		# calculate the average of each chemical specise over this 'plateau', concentrations = ['S1'mean, 'S2'mean, ...., 'Sa'mean]
 		concentrations = np.nanmean(self.reaction_profile[initial_timestep:-1:1, :], axis=0)
 		# take product of ([A]^a * [B]^b * ... etc) for each elementary reaction
@@ -589,7 +589,7 @@ class experiment():
 
 	def remove_flat_region(self,threshold = 0.000000000000001):
 		#logger.info('reaction_profile shape:',self.reaction_profile.shape)
-		reaction_profile_sampled = self.reaction_profile[::self.reaction_profile.shape[0]/20]
+		reaction_profile_sampled = self.reaction_profile[::self.reaction_profile.shape[0]//20]
 		#logger.info('reaction_profile_sampled shape:',reaction_profile_sampled.shape)
 		for i in range(1,reaction_profile_sampled.shape[0]):
 			this_line = reaction_profile_sampled[i]
@@ -598,8 +598,8 @@ class experiment():
 				break
 		logger.info('				Concentrations all approximately reach equilibrium at '+str(i/reaction_profile_sampled.shape[0]*100)+'% of calculated length (time-step: '+str(i)+').')
 		#time_array
-		self.time_array = self.time_array[:self.time_array.shape[0]/500*i]
-		self.reaction_profile = self.reaction_profile[:self.reaction_profile.shape[0]/500*i]
+		self.time_array = self.time_array[:self.time_array.shape[0]//500*i]
+		self.reaction_profile = self.reaction_profile[:self.reaction_profile.shape[0]//500*i]
 
 
 
