@@ -252,9 +252,11 @@ class experiment():
 		# calculate the average of each chemical specise over this 'plateau', concentrations = ['S1'mean, 'S2'mean, ...., 'Sa'mean]
 		concentrations = np.nanmean(self.reaction_profile[initial_timestep:-1:1, :], axis=0)
 		# take product of ([A]^a * [B]^b * ... etc) for each elementary reaction
+		logger.debug('concentrations: '+HANDY.np_repr(concentrations))
+		logger.debug('self.coefficient_array: '+HANDY.np_repr(self.coefficient_array))
 		self.experimental_Keq_array = np.prod(np.power(concentrations, self.coefficient_array), axis=1)
 		self.experimental_Keq_array = np.nan_to_num(self.experimental_Keq_array)
-		#logger.info("\nExperimental Keq " + HANDY.np_repr(self.experimental_Keq_array) + "\n")	
+		logger.debug("Experimental Keq " + HANDY.np_repr(self.experimental_Keq_array) + "\n")	
 		return True
 
 	# solves the coupled ode's, effectively 'runs' the experiment
