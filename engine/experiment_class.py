@@ -466,8 +466,8 @@ class experiment():
 		conc_x = self.get_reaction_profile((experiment.RATE_CONSTANT_EXTRACTION_START_POINT, experiment.RATE_CONSTANT_EXTRACTION_END_POINT))
 		
 		
-		logger.info("Conc shape: " + str(conc_x.shape)
-		 	 +"\nConc vals " + HANDY.np_repr(conc_x))#, file=sys.stderr)
+		#logger.debug("Conc shape: " + str(conc_x.shape)
+		# 	 +"\nConc vals " + HANDY.np_repr(conc_x))#, file=sys.stderr)
 		
 		# trim the first and last element off the concentration so it has the same length as the dSdt
 		slice_of_conc   = np.resize(conc_x, (conc_x.shape[0]-2, 1, self.number_of_species))
@@ -526,7 +526,7 @@ class experiment():
 			X[a] = np.sum(dSdt[:,0,:] * A[:,a,:])
 			#X[a] = np.sum(np.sum((dSdt[:,0,:] * A[:,a,:]), axis = 1), axis = 0)
 
-		logger.info("M: \n" + str(M))
+		#logger.info("M: \n" + str(M))
 		# calculate the eigenvalues and eigenvectors
 		if(np.all(np.transpose(M) == M)):
 			logger.info("			We just confirmed that M is symmetric.") 
@@ -536,8 +536,8 @@ class experiment():
 			e_values, e_vectors = np.linalg.eig(M)
 
 		
-		logger.info("\nEigenvectors\n" + str(e_vectors)
-		 	+ "\nEigenvalues\n"  + str(e_values))
+		#logger.info("\nEigenvectors\n" + str(e_vectors)
+		# 	+ "\nEigenvalues\n"  + str(e_values))
 
 
 		# check if eigenvectors are singular
@@ -564,6 +564,12 @@ class experiment():
 		# 	+ "\n Masked evals: " + HANDY.np_repr(masked_e_values))
 		for a in range(self.number_of_reactions):
 			for b in range(self.number_of_reactions):
+				#logger.debug("====================================================================================================")
+				#logger.debug("======== np.multiply(e_vectors[a,:], e_vectors[b,:]): "+str( np.multiply(e_vectors[a,:], e_vectors[b,:]) ))
+				#logger.debug("================ masked_e_values[:]: "+str( masked_e_values[:] ))
+				#logger.debug("======== np.divide(%, masked_e_values[:]): "+str( np.divide(np.multiply(e_vectors[a,:], e_vectors[b,:]), masked_e_values[:]) ))
+				#logger.debug("======== np.sum@%: "+str( np.sum(np.divide(np.multiply(e_vectors[a,:], e_vectors[b,:]), masked_e_values[:])) ))
+				#logger.debug("======== np.nan_to_num@%: "+str( np.nan_to_num(np.float_(np.sum(np.divide(np.multiply(e_vectors[a,:], e_vectors[b,:]), masked_e_values[:])))) ))
 				M_inverse[a,b] = np.nan_to_num(np.float_(np.sum(np.divide(np.multiply(e_vectors[a,:], e_vectors[b,:]), masked_e_values[:]))))
 			# for b
 		# for a
