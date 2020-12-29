@@ -71,7 +71,7 @@ def run_true_experiment(puzzle, condition, condition_path, progress_tick, stream
         # therefore we may need to pre-equilibrate
 
         # if there is only one species no pre-equilibration is needed as no dissociation can occur
-        if reagent_obj.number_of_species is 1:
+        if reagent_obj.number_of_species == 1:
             # then directly add the reagents concentrations to their associated molecule concentrations
             condition.molecule_concentrations[name] += condition.reagent_concentrations[reagent_name]
 
