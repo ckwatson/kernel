@@ -79,7 +79,7 @@ class experiment():
 		#		"\n")
 
 		# as sorted single values
-		self.temp					 = np.float(input_temp + experiment.TEMPERATURE_CONVERSION_FACTOR)
+		self.temp					 = float(input_temp + experiment.TEMPERATURE_CONVERSION_FACTOR)
 		self.RT					   = R * np.asfarray(input_temp + experiment.TEMPERATURE_CONVERSION_FACTOR)
 		self.scaling_factor		   = experiment.SCALING_FACTOR
 		self.Keq_threshold			= Keq_threshold		   if (Keq_threshold != None)		  else pow(10, -7)

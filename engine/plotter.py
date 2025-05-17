@@ -48,7 +48,7 @@ def sub_plots(Temperature, plottingDict, condition_fileName, solution_fileName, 
                       edgecolor='k', tight_layout=True)  # figsize = (width, heigh)
     combined = figure(figsize=(35, 22), dpi=80, facecolor='w',
                       edgecolor='k', tight_layout=True)  # figsize = (width, heigh)
-    dimensions = np.ceil(np.sqrt(number_of_plots))
+    dimensions = int(np.ceil(np.sqrt(number_of_plots)))
     # need to replace with logging
     logger.info("        (a) load 2 set of data:")
     if written_true_data is not None:
