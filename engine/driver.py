@@ -30,7 +30,6 @@ def equilibrate(input_model: experiment_class.experiment, diag=False):
     input_model.find_reaction_profile(diagnostic_output=diag)
     input_model.find_experimental_Keq_array()
     input_model.remove_flat_region()
-    return True
 
 
 def run_true_experiment(job_id: str, puzzle: puzzle_class.puzzle,
