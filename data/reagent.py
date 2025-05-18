@@ -98,5 +98,5 @@ class reagent(reaction_mechanism_class.reaction_mechanism):
         return loaded_dict
 
 
-if(__name__ == "__main__"):
-    self.test()
+if __name__ == "__main__":
+    reagent.test()
