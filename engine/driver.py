@@ -15,11 +15,6 @@ from . import fileIO, experiment_class
 from . import handy_functions as HANDY
 import numpy as np
 
-# Initialize logger:
-# tell the program to send messages on its own behalf.
-logger = logging.getLogger(__name__)
-
-temp_diag = True
 diag = os.path.join("Diagnose" + os.sep)
 graph = os.path.join("Graphs" + os.sep)
 
