@@ -38,7 +38,7 @@ def fake_writer(plot):
     return '<svg viewBox="0 0 2520 1584">' + data.decode("utf-8")[367:]
 
 
-def sub_plots(Temperature, plottingDict, condition_fileName, solution_fileName, written_true_data=None, written_user_data=None):
+def sub_plots(plottingDict, written_true_data=None, written_user_data=None):
     number_of_plots = len(plottingDict)
     # need to replace with logging
     logger.info("entered Plotter.sub_plots.\n        Attempting to plot " +
@@ -51,33 +51,8 @@ def sub_plots(Temperature, plottingDict, condition_fileName, solution_fileName, 
     dimensions = int(np.ceil(np.sqrt(number_of_plots)))
     # need to replace with logging
     logger.info("        (a) load 2 set of data:")
-    if written_true_data is not None:
-        logger.info('            (i)  Data of true model, from memory cache.')
-        true_data = written_true_data
-    else:  # we have to use data from file now...
-        logger.info('            (i)  Data of true model, from "' +
-                    condition_fileName + '_.dat"...')
-        true_data = fileIO.load_modelData(condition_fileName + '_.dat')
-    if written_user_data is not None:
-        if_userModel_failed = written_user_data is False
-        if if_userModel_failed:
-            logger.info(
-                '            (ii) Data of user model, but it failed according to memory cache.')
-        else:
-            logger.info(
-                '            (ii) Data of user model, from memory cache.')
-            user_data = written_user_data
-    else:  # we have to use data from file now...
-        # heck whether this user model is okay, by checking the flag file.
-        if_userModel_failed = os.path.isfile(solution_fileName + '_Failed')
-        if if_userModel_failed:
-            logger.info(
-                '            (ii) Data of user model, but it failed according to file stored.')
-        else:
-            logger.info(
-                '            (ii) Data of user model, from file stored.')
-            user_data = fileIO.load_modelData(solution_fileName + '_.dat')
-        # need to replace with logging
+    true_data = written_true_data
+    user_data = written_user_data
     logger.info("        (b) draw the plots:")
 
     rc('font', size=22)
@@ -85,7 +60,7 @@ def sub_plots(Temperature, plottingDict, condition_fileName, solution_fileName, 
     sub_combined = combined.add_subplot(
         111, title='Combined True Profile', xlabel='time', ylabel='Concentration')
 
-    if not if_userModel_failed:
+    if user_data is not None:
         logger.info(
             '            Aligning shapes of userDataSet and trueDataSet.')
         # if the trueDataSet is shorter, extend it to match the length of the userDataSet
@@ -118,7 +93,7 @@ def sub_plots(Temperature, plottingDict, condition_fileName, solution_fileName, 
             sub_combined.  plot(
                 data_x_true, data_y_this, colour[plot_info + 2], label='True ' + '[' + name + ']', linestyle="-")
         # then user model:
-        if not if_userModel_failed:
+        if user_data is not None:
             data_y_this = user_data_sampled[location + 1, :]
             if not (if_SkipDrawingSpeciesWithZeroConcentrations and not any(y != 0 for y in data_y_this)):
                 sub_individual.plot(
@@ -127,14 +102,12 @@ def sub_plots(Temperature, plottingDict, condition_fileName, solution_fileName, 
                     data_x_user, data_y_this, colour[plot_info + 2], label='User ' + '[' + name + ']', linestyle="--")
         # sub_individual.legend()
     sub_combined.legend()
-    logger.info("        (c) Save plots to file: [Individual] ")
-    #mpld3.save_html(profiles, profiles_filename+'.html')
-    #mpld3.save_html(combined, combined_filename+'.html')
+    logger.info("        (c) Saving SVG: [Individual]")
     # profiles.tight_layout()
     profiles = fake_writer(profiles)
-    logger.info("[Combined]")
+    logger.info("                        [Combined]")
     combined = fake_writer(combined)
-    logger.info("Done.")
+    logger.info("                        Done.")
     return (profiles, combined)
 
 
