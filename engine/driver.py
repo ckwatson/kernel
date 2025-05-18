@@ -173,7 +173,7 @@ def run_proposed_experiment(job_id: str, condition: condition_class.Condition, s
     # make the experiment object
 
     proposed_model = experiment_class.experiment(
-        solution, condition.reaction_temperature, input_time=data[0][:], rxn_profile=np.swapaxes(data[1::1][:], 0, 1))
+        solution, condition.reaction_temperature, input_time=data[0], rxn_profile=data[1:].T)
 
     try:
         # try to find the rate constants
