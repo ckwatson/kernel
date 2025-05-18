@@ -12,7 +12,7 @@ from . import experiment_class
 from . import handy_functions as HANDY
 import numpy as np
 
-from ..data import solution_class, condition_class, reaction_mechanism_class
+from ..data import solution_class, condition_class, reaction_mechanism_class, puzzle_class
 
 diag = os.path.join("Diagnose" + os.sep)
 graph = os.path.join("Graphs" + os.sep)
@@ -33,7 +33,9 @@ def equilibrate(input_model: experiment_class.experiment, diag=False):
     return True
 
 
-def run_true_experiment(job_id: str, puzzle, condition) -> np.ndarray:
+def run_true_experiment(job_id: str, puzzle: puzzle_class.puzzle,
+                        condition: condition_class.Condition,
+                        ) -> np.ndarray:
     logger = logging.getLogger(job_id).getChild("run_true_experiment")
     logger.info("            First, pre-equilibrate every reagent:")
     for reagent_name, mechanism in puzzle.reagent_dict.items():
