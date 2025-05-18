@@ -156,15 +156,8 @@ def run_true_experiment(job_id: str, puzzle, condition) -> np.ndarray:
 
 
 
-def run_proposed_experiment(job_id: str, condition, condition_path, solution, written_true_data=None) -> Optional[np.ndarray]:
+def run_proposed_experiment(job_id: str, condition, solution, data=None) -> Optional[np.ndarray]:
     logger = logging.getLogger(job_id).getChild("run_proposed_experiment")
-
-    # load the species from the true model
-    if written_true_data is not None:
-        data = written_true_data
-    else:
-        data = fileIO.load_modelData(os.path.join(
-            condition_path, "plotData_t_") + str(condition.reaction_temperature) + '_.dat')
 
     # make the experiment object
     proposed_model = experiment_class.experiment(
