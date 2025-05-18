@@ -52,17 +52,7 @@ def show_all_concentrations(condition):
 
 
 def run_true_experiment(puzzle, condition) -> np.ndarray:
-    def show_all_concentrations():
-        logger.info(
-            "                    Update the concentration record of the whole lab:")
-        buff = '                        '
-        for i in condition.molecule_concentrations.keys():
-            buff += i + '\t'
-        buff = '                        '
-        for i in condition.molecule_concentrations.values():
-            buff += str(i)[:4] + "\t"
-        logger.info(buff)
-
+    logger = logging.getLogger("run_true_experiment")
     logger.info("            First, pre-equilibrate every reagent:")
     # zero out all the condition objects molecule concentrations as a saftey measure
     # this should probably be made a funciton in the condition class at some later point
