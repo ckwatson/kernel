@@ -111,7 +111,7 @@ def run_true_experiment(puzzle, condition) -> np.ndarray:
             condition.molecule_concentrations[name] += concentration_of_this_species
 
         # collect the equilibrated concentrations
-        show_all_concentrations()
+        show_all_concentrations(condition)
         # we no longer need this obj
         del pre_equil_model
 
