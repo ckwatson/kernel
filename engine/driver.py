@@ -33,8 +33,8 @@ def equilibrate(input_model, in_conc=None, diag=False):
     return True
 
 
-def show_all_concentrations(condition):
-    logger = logging.getLogger("run_true_experiment.show_all_concentrations")
+def show_all_concentrations(job_id: str, condition):
+    logger = logging.getLogger(job_id).getChild("show_all_concentrations")
     logger.info(
         "                    Update the concentration record of the whole lab:")
     buff = '                        '
@@ -46,8 +46,8 @@ def show_all_concentrations(condition):
     logger.info(buff)
 
 
-def run_true_experiment(puzzle, condition) -> np.ndarray:
-    logger = logging.getLogger("run_true_experiment")
+def run_true_experiment(job_id: str, puzzle, condition) -> np.ndarray:
+    logger = logging.getLogger(job_id).getChild("run_true_experiment")
     logger.info("            First, pre-equilibrate every reagent:")
     # zero out all the condition objects molecule concentrations as a safety measure
     # this should probably be made a funciton in the condition class at some later point
@@ -77,7 +77,7 @@ def run_true_experiment(puzzle, condition) -> np.ndarray:
                 "                    This reagent only has one species so no pre-equilibration happened.")
             logger.info("                    This reagent had a concentration of " +
                         str(condition.reagent_concentrations[reagent_name]))
-            show_all_concentrations(condition)
+            show_all_concentrations(job_id, condition)
             # this break is for the loop on line 44, remember that we check each reagent for pre-equilibration
             # some reagents may need to pre-equilibrate and some may not
             break
@@ -111,7 +111,7 @@ def run_true_experiment(puzzle, condition) -> np.ndarray:
             condition.molecule_concentrations[name] += concentration_of_this_species
 
         # collect the equilibrated concentrations
-        show_all_concentrations(condition)
+        show_all_concentrations(job_id, condition)
         # we no longer need this obj
         del pre_equil_model
 
@@ -156,8 +156,8 @@ def run_true_experiment(puzzle, condition) -> np.ndarray:
 
 
 
-def run_proposed_experiment(condition, condition_path, solution, written_true_data=None) -> Optional[np.ndarray]:
-    logger = logging.getLogger("run_proposed_experiment")
+def run_proposed_experiment(job_id: str, condition, condition_path, solution, written_true_data=None) -> Optional[np.ndarray]:
+    logger = logging.getLogger(job_id).getChild("run_proposed_experiment")
 
     # load the species from the true model
     if written_true_data is not None:
