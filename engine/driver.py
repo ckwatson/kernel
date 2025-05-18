@@ -15,6 +15,8 @@ from . import fileIO, experiment_class
 from . import handy_functions as HANDY
 import numpy as np
 
+from ..data import solution_class, condition_class
+
 diag = os.path.join("Diagnose" + os.sep)
 graph = os.path.join("Graphs" + os.sep)
 
@@ -152,11 +154,11 @@ def run_true_experiment(job_id: str, puzzle, condition) -> np.ndarray:
 
     del true_model
 
-    logger.info("            True model sucessfully constructed.")
+    logger.info("            True model successfully constructed.")
     return written_data
 
 
-def run_proposed_experiment(job_id: str, condition, solution, data=None) -> Optional[np.ndarray]:
+def run_proposed_experiment(job_id: str, condition: condition_class.Condition, solution: solution_class.solution, data=np.ndarray) -> Optional[np.ndarray]:
     logger = logging.getLogger(job_id).getChild("run_proposed_experiment")
 
     # make the experiment object
