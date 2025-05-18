@@ -11,7 +11,7 @@ from typing import Optional
 
 # These are the programs modules
 # from . import input_output
-from . import plotter, fileIO, experiment_class
+from . import fileIO, experiment_class
 from . import handy_functions as HANDY
 import numpy as np
 
@@ -28,7 +28,7 @@ graph = os.path.join("Graphs" + os.sep)
 # this function executes the necessary mathematical operations to find the Keq array - i.e. equilibrates the reaction
 
 
-def equilibrate(input_model, progress_tick, in_conc=None, diag=False):
+def equilibrate(input_model, in_conc=None, diag=False):
         # the meat and potatoes
     input_model.find_rate_constant()
     input_model.find_reaction_rate_function()
@@ -38,7 +38,7 @@ def equilibrate(input_model, progress_tick, in_conc=None, diag=False):
     return True
 
 
-def run_true_experiment(puzzle, condition, condition_path, progress_tick, stream=sys.stdout) -> np.ndarray:
+def run_true_experiment(puzzle, condition) -> np.ndarray:
     def show_all_concentrations():
         logger.info(
             "                    Update the concentration record of the whole lab:")
@@ -50,7 +50,6 @@ def run_true_experiment(puzzle, condition, condition_path, progress_tick, stream
             buff += str(i)[:4] + "\t"
         logger.info(buff)
 
-    #sys.stdout = open(diag + "diagnostic_stdout_" + str(condition.reaction_temperature) + "_.dat", "w") if (temp_diag == True) else system_output
     logger.info("            First, pre-equilibrate every reagent:")
     # zero out all the condition objects molecule concentrations as a saftey measure
     # this should probably be made a funciton in the condition class at some later point
@@ -101,7 +100,7 @@ def run_true_experiment(puzzle, condition, condition_path, progress_tick, stream
         logger.info("			* reagent_conc_array -- before: " +
                     str(reagent_conc_array))
 
-        equilibrate(pre_equil_model, progress_tick, diag=False)
+        equilibrate(pre_equil_model, diag=False)
         logger.info("			* reagent_conc_array -- after: " +
                     str(pre_equil_model.reaction_profile[-1]))
         # finally after we have obtained the new equilibrated concentrations we place those in the condition object
@@ -134,7 +133,7 @@ def run_true_experiment(puzzle, condition, condition_path, progress_tick, stream
     # now we perform the same mathematical operations as before, but this time we have all the molecules present instead of isolated reactions
     logger.info(
         "            Now we can finally let the actual reaction happen -- let's pour everything into the beaker:")
-    equilibrate(true_model, progress_tick, in_conc=condition.reagent_concentrations,
+    equilibrate(true_model, in_conc=condition.reagent_concentrations,
                 diag=False)  # the magical math happens
 
     # for the progress bar, to represent that we finished calculating the true model
@@ -161,8 +160,8 @@ def run_true_experiment(puzzle, condition, condition_path, progress_tick, stream
 ###################################
 
 
-def run_proposed_experiment(puzzle, condition, condition_path, progress_tick, solution, solution_path, written_true_data=None, stream=sys.stdout) -> Optional[np.ndarray]:
-    #sys.stdout = open(diag + "diagnostic_stdout_student_" + str(condition.reaction_temperature) + "_.dat", "w") if (temp_diag == True) else system_output
+def run_proposed_experiment(condition, condition_path, solution, written_true_data=None) -> Optional[np.ndarray]:
+    logger = logging.getLogger("run_proposed_experiment")
 
     # load the species from the true model
     if written_true_data is not None:
@@ -177,25 +176,21 @@ def run_proposed_experiment(puzzle, condition, condition_path, progress_tick, so
 
     try:
         # try to find the rate constants
-        rate_consants = proposed_model.get_matrix_rate_solution()
-        #logger.info("Rate Constants " + str(rate_consants))
-
+        rate_constants = proposed_model.get_matrix_rate_solution()
+        logger.debug("Rate Constants: %s", rate_constants)
     # try to handle bad rate constants
     except HANDY.User as u_error:
         bad_rxn = np.flatnonzero(u_error.value)
 
         # if more than one reaction has forward and backward rate constants of negative value then crash
-        if(bad_rxn.size > 1):
+        if bad_rxn.size > 1:
 
             logger.info("An issue has been detected. Reactions "
                         + str(bad_rxn + 1)
                         + " are unstable.\n Cannot proceed with user reaction, input new reaction.")
-            # sys.stdout.close()
-            #sys.stdout = system_output
-            # input_output.write_failed_userData(condition.reaction_temperature, data_file_name = os.path.join(solution_path, "plotData_t_"))
             return None
         # if only one reaction is 'bad' then try to remove it and solve again
-        elif(bad_rxn.size == 1):
+        elif bad_rxn.size == 1:
 
             logger.info("An issue has been detected. Reaction "
                         + str(bad_rxn[0] + 1)
@@ -204,17 +199,13 @@ def run_proposed_experiment(puzzle, condition, condition_path, progress_tick, so
                 proposed_model.remove_rxn(bad_rxn[0])
 
                 # try to find the rate constants again
-                rate_consants = proposed_model.get_matrix_rate_solution()
+                rate_constants = proposed_model.get_matrix_rate_solution()
 
             # if we fail again then crash
-            except HANDY.User as u_error:
-
+            except HANDY.User:
                 logger.error("Another issue has been detected. Reaction "
                              + str(bad_rxn[0] + 1)
                              + " is unstable. \n Cannot proceed, crashing.")
-                # sys.stdout.close()
-                #sys.stdout = system_output
-                # input_output.write_failed_userData(condition.reaction_temperature, data_file_name = os.path.join(solution_path, "plotData_t_"))
                 return None
 
         # completed try successfully
@@ -249,12 +240,3 @@ def run_proposed_experiment(puzzle, condition, condition_path, progress_tick, so
     #sys.stdout = system_output if (temp_diag == True) else sys.stdout
     return written_data
 
-
-# just a wrapper for backwards compatibility until i replace all the places its used in the code
-def drive_data(puzzle, puzzle_path, condition, condition_path, progress_tick, solution=None, solution_path=None, written_true_data=None) -> Optional[np.ndarray]:
-    #system_output = sys.stdout
-    # if we are simulating the true_model then solution argument is none
-    if solution is None:
-        return run_true_experiment(puzzle, condition, condition_path, progress_tick)
-    else:
-        return run_proposed_experiment(puzzle, condition, condition_path, progress_tick, solution, solution_path, written_true_data)
