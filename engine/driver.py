@@ -34,11 +34,12 @@ def equilibrate(input_model: experiment_class.experiment, diag=False):
 
 def run_true_experiment(job_id: str, puzzle: puzzle_class.puzzle,
                         condition: condition_class.Condition,
+                        diag=False,
                         ) -> np.ndarray:
     logger = logging.getLogger(job_id).getChild("run_true_experiment")
     logger.info("            First, pre-equilibrate every reagent:")
     for reagent_name, mechanism in puzzle.reagent_dict.items():
-        preequilibrate_reagent(job_id, mechanism, condition, reagent_name)
+        preequilibrate_reagent(job_id, mechanism, condition, reagent_name, diag=diag)
 
     # now that we have left the loop over REAGENTS we have pre-equilibrated all necessary REAGENTS
     logger.info(
@@ -57,7 +58,7 @@ def run_true_experiment(job_id: str, puzzle: puzzle_class.puzzle,
     # now we perform the same mathematical operations as before, but this time we have all the molecules present instead of isolated reactions
     logger.info(
         "            Now we can finally let the actual reaction happen -- let's pour everything into the beaker:")
-    equilibrate(true_model, diag=False)  # the magical math happens
+    equilibrate(true_model, diag=diag)  # the magical math happens
 
     table = tabulate([
         ["Starting Concentrations (mol)"]+starting_concentrations,
@@ -74,7 +75,7 @@ def run_true_experiment(job_id: str, puzzle: puzzle_class.puzzle,
         [true_model.time_array, true_model.reaction_profile]))
 
 
-def preequilibrate_reagent(job_id: str, mechanism: reaction_mechanism_class.reaction_mechanism, condition: condition_class.Condition, reagent_name: str) -> None:
+def preequilibrate_reagent(job_id: str, mechanism: reaction_mechanism_class.reaction_mechanism, condition: condition_class.Condition, reagent_name: str, diag: bool = False) -> None:
     """
     Some reagents may dissociate into multiple species even when sitting ideally in a canister/beaker, so we need to
     pre-equilibrate them.
@@ -143,7 +144,7 @@ def preequilibrate_reagent(job_id: str, mechanism: reaction_mechanism_class.reac
         # actually preform the mathematical calculations
         # (diagnostics) diag is an optional argument that if true prints all the output from the integrator inside the experiment object
         # this is a lotttt of extra output
-        equilibrate(pre_equil_model, diag=False)
+        equilibrate(pre_equil_model, diag=diag)
         final_concentrations = pre_equil_model.reaction_profile[-1]
 
         table = tabulate([starting_concentrations, final_concentrations],
@@ -166,7 +167,7 @@ def preequilibrate_reagent(job_id: str, mechanism: reaction_mechanism_class.reac
     logger.info("                    Updated concentrations of all reagents before the main experiment take place:\n%s", table)
 
 
-def run_proposed_experiment(job_id: str, condition: condition_class.Condition, solution: solution_class.solution, data=np.ndarray) -> Optional[np.ndarray]:
+def run_proposed_experiment(job_id: str, condition: condition_class.Condition, solution: solution_class.solution, data=np.ndarray, diag=False) -> Optional[np.ndarray]:
     logger = logging.getLogger(job_id).getChild("run_proposed_experiment")
 
     # make the experiment object
@@ -221,7 +222,7 @@ def run_proposed_experiment(job_id: str, condition: condition_class.Condition, s
 
     logger.info("            Concentrations: " + str(temp))
     proposed_model.find_reaction_profile(
-        input_concentration=temp, diagnostic_output=False)
+        input_concentration=temp, diagnostic_output=diag)
     proposed_model.remove_flat_region()
     # write the solution to a file
     # so this is the only location where the solution path is used, and if we can wrap this in a fashion, or have the solution object store its 'location' then i can remove the solution paths from driver completely
