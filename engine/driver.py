@@ -38,6 +38,19 @@ def equilibrate(input_model, in_conc=None, diag=False):
     return True
 
 
+def show_all_concentrations(condition):
+    logger = logging.getLogger("run_true_experiment.show_all_concentrations")
+    logger.info(
+        "                    Update the concentration record of the whole lab:")
+    buff = '                        '
+    for i in condition.molecule_concentrations.keys():
+        buff += i + '\t'
+    buff = '                        '
+    for i in condition.molecule_concentrations.values():
+        buff += str(i)[:4] + "\t"
+    logger.info(buff)
+
+
 def run_true_experiment(puzzle, condition) -> np.ndarray:
     def show_all_concentrations():
         logger.info(
@@ -79,7 +92,7 @@ def run_true_experiment(puzzle, condition) -> np.ndarray:
                 "                    This reagent only has one species so no pre-equilibration happened.")
             logger.info("                    This reagent had a concentration of " +
                         str(condition.reagent_concentrations[reagent_name]))
-            show_all_concentrations()
+            show_all_concentrations(condition)
             # this break is for the loop on line 44, remember that we check each reagent for pre-equilibration
             # some reagents may need to pre-equilibrate and some may not
             break
