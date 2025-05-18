@@ -180,7 +180,7 @@ def run_proposed_experiment(job_id: str, condition: condition_class.Condition, s
         rate_constants = proposed_model.get_matrix_rate_solution()
         logger.debug("Rate Constants: %s", rate_constants)
     # try to handle bad rate constants
-    except HANDY.User as u_error:
+    except HANDY.NegativeCoefficientException as u_error:
         bad_rxn = np.flatnonzero(u_error.value)
 
         # if more than one reaction has forward and backward rate constants of negative value then crash
@@ -203,7 +203,7 @@ def run_proposed_experiment(job_id: str, condition: condition_class.Condition, s
                 rate_constants = proposed_model.get_matrix_rate_solution()
 
             # if we fail again then crash
-            except HANDY.User:
+            except HANDY.NegativeCoefficientException:
                 logger.error("Another issue has been detected. Reaction "
                              + str(bad_rxn[0] + 1)
                              + " is unstable. \n Cannot proceed, crashing.")

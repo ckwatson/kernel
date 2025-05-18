@@ -591,7 +591,7 @@ class experiment():
 		check = np.all(np.less(self.rate_constant_array, 0.0), axis = 1)
 		if(np.any(check)):
 			sys.stdout.flush()
-			raise HANDY.User(check)
+			raise HANDY.NegativeCoefficientException(check)
 
 		return self.rate_constant_array
 

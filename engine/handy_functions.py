@@ -48,7 +48,7 @@ def crash():
 # generic exception
 
 
-class User(Exception):
+class NegativeCoefficientException(Exception):
     def __init__(self, truth_array):
         self.value = truth_array
 
