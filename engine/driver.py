@@ -224,16 +224,7 @@ def run_proposed_experiment(job_id: str, condition: condition_class.Condition, s
     proposed_model.find_reaction_profile(
         input_concentration=temp, diagnostic_output=diag)
     proposed_model.remove_flat_region()
-    # write the solution to a file
-    # so this is the only location where the solution path is used, and if we can wrap this in a fashion, or have the solution object store its 'location' then i can remove the solution paths from driver completely
-    # input_output.write_ODE(condition.reaction_temperature, proposed_model.time_array, proposed_model.reaction_profile, data_file_name = os.path.join(solution_path, "plotData_t_"))
-    written_data = np.transpose(np.column_stack(
-        [proposed_model.time_array, proposed_model.reaction_profile]))
-
-    logger.info(str(proposed_model.rate_constant_array))
-    logger.info(str(proposed_model.theoretical_Keq_array))
-    logger.info(str(proposed_model.experimental_Keq_array))
-
     logger.info("            Rate Constant array " + HANDY.np_repr(proposed_model.rate_constant_array)
                 + "            Experimental  K_eq  " + HANDY.np_repr(proposed_model.experimental_Keq_array))
-    return written_data
+    return np.transpose(np.column_stack(
+        [proposed_model.time_array, proposed_model.reaction_profile]))
