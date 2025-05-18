@@ -18,13 +18,14 @@ import numpy as np
 diag = os.path.join("Diagnose" + os.sep)
 graph = os.path.join("Graphs" + os.sep)
 
+
 # for now we use 'rxn_mechanism' since puzzle and solution can both be used here
 # input_model is an instance of class experiment
 # this function executes the necessary mathematical operations to find the Keq array - i.e. equilibrates the reaction
 
 
 def equilibrate(input_model, in_conc=None, diag=False):
-        # the meat and potatoes
+    # the meat and potatoes
     input_model.find_rate_constant()
     input_model.find_reaction_rate_function()
     input_model.find_reaction_profile(diagnostic_output=diag)
@@ -60,7 +61,7 @@ def run_true_experiment(job_id: str, puzzle, condition) -> np.ndarray:
         reagent_conc_array = np.zeros((1, reagent_obj.number_of_species))
         # we start with the concentrations defined by the user in the condition object they passed to us
         reagent_conc_array[0][reagent_obj.coefficient_dict[reagent_name]
-                              ] = condition.reagent_concentrations[reagent_name]
+        ] = condition.reagent_concentrations[reagent_name]
         #
         #logger.info("Reagent temps: " + str(condition.reagent_temperatures))
 
@@ -155,7 +156,6 @@ def run_true_experiment(job_id: str, puzzle, condition) -> np.ndarray:
     return written_data
 
 
-
 def run_proposed_experiment(job_id: str, condition, solution, data=None) -> Optional[np.ndarray]:
     logger = logging.getLogger(job_id).getChild("run_proposed_experiment")
 
@@ -225,4 +225,3 @@ def run_proposed_experiment(job_id: str, condition, solution, data=None) -> Opti
     logger.info("            Rate Constant array " + HANDY.np_repr(proposed_model.rate_constant_array)
                 + "            Experimental  K_eq  " + HANDY.np_repr(proposed_model.experimental_Keq_array))
     return written_data
-
