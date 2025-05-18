@@ -8,8 +8,6 @@ import os
 import logging
 from typing import Optional
 from tabulate import tabulate
-# These are the programs modules
-# from . import input_output
 from . import experiment_class
 from . import handy_functions as HANDY
 import numpy as np
@@ -46,41 +44,37 @@ def run_true_experiment(job_id: str, puzzle, condition) -> np.ndarray:
         "            Pre-equilibration finished -- now all reagents are under pre-equilibrium.")
     # this temp array seems to be due to a change in the parameter specs for the experiment objects instantiation method
     # basically a quick hack that needs to be factorized/cleaned up
-    temp = np.zeros((1, puzzle.number_of_species))
-    for name, value in puzzle.coefficient_dict.items():
-        temp[0][value] = condition.molecule_concentrations[name]
-    #logger.info("Conc array passed in: ", temp, '\n')
+
+    sorted_species_names = sorted(puzzle.coefficient_dict, key=puzzle.coefficient_dict.get)
+    starting_concentrations = [condition.molecule_concentrations[name] for name in
+                      sorted_species_names]
 
     # this is the experiment object that represents the "actual reaction"
     true_model = experiment_class.experiment(
-        puzzle, condition.reaction_temperature, input_time=[0.0], rxn_profile=temp)
+        puzzle, condition.reaction_temperature, input_time=[0.0],
+        rxn_profile=np.array([starting_concentrations]))
     # now we perform the same mathematical operations as before, but this time we have all the molecules present instead of isolated reactions
     logger.info(
         "            Now we can finally let the actual reaction happen -- let's pour everything into the beaker:")
     equilibrate(true_model, diag=False)  # the magical math happens
 
-    # for the progress bar, to represent that we finished calculating the true model
-
-    # write the solution to a file
-    # so this is the only location where the condition path is used, and if we can wrap this in a fashion, or have the solution object store its 'location' then i can remove the condition paths from driver completely
-    # input_output.write_ODE(condition.reaction_temperature, true_model.time_array, true_model.reaction_profile, data_file_name = os.path.join(condition_path, "plotData_t_"))
-    written_data = np.transpose(np.column_stack(
+    table = tabulate([
+        ["Starting Concentrations (mol)"]+starting_concentrations,
+        ["Reactant Rate Constants"]+(-true_model.reactant_rate_constants).tolist(),
+        ["Product Rate Constants"]+true_model.product_rate_constants.tolist(),
+        ["Effective Rate Constants"]+(true_model.product_rate_constants-true_model.reactant_rate_constants).tolist(),
+        ["Theoretical K_eq"]+true_model.theoretical_Keq_array.tolist(),
+        ["Experimental K_eq"]+true_model.experimental_Keq_array.tolist(),
+    ],
+                     headers=sorted_species_names,
+                     floatfmt=".4g", tablefmt="github")
+    logger.info('            True model successfully constructed: \n%s\n            For `K_eq`, use the "theoretical" value, since this is a source-of-truth experiment. (The "theoretical" and the "empirical" values should match, though.)', table)
+    # Return a 2D array with the first column being timestamps and the rest being the concentrations of each species.
+    return np.transpose(np.column_stack(
         [true_model.time_array, true_model.reaction_profile]))
 
-    logger.info("                Reactant Rate Constants " + HANDY.np_repr(true_model.reactant_rate_constants)
-                + "\n                 Product  Rate Constants " +
-                HANDY.np_repr(true_model.product_rate_constants)
-                + "\n                 Theoretical   K_eq  " +
-                HANDY.np_repr(true_model.theoretical_Keq_array)
-                + "\n                 Experimental  K_eq  " + HANDY.np_repr(true_model.experimental_Keq_array))
 
-    del true_model
-
-    logger.info("            True model successfully constructed.")
-    return written_data
-
-
-def preequilibrate_reagent(job_id: str, mechanism: reaction_mechanism_class.reaction_mechanism, condition: condition_class.Condition, reagent_name: str):
+def preequilibrate_reagent(job_id: str, mechanism: reaction_mechanism_class.reaction_mechanism, condition: condition_class.Condition, reagent_name: str) -> None:
     """
     Some reagents may dissociate into multiple species even when sitting ideally in a canister/beaker, so we need to
     pre-equilibrate them.
@@ -109,12 +103,14 @@ def preequilibrate_reagent(job_id: str, mechanism: reaction_mechanism_class.reac
     ```
 
     says that the first elementary reaction would happen in a canister/beaker of C2H6, but the other 4 would not.
+
+    This function updates the `molecule_concentrations` field of the `condition` object.
     """
     logger = logging.getLogger(job_id).getChild("preequilibrate_reagent")
     logger.info("                Pre-equilibrate " + reagent_name + ":")
 
     # Zero out all the condition objects molecule concentrations as a safety measure.
-    # This should probably be made a function in the condition class at some later point.
+    # TODO: This should probably be made a function in the condition class at some later point.
     for name in mechanism.coefficient_dict.keys():
         condition.molecule_concentrations[name] = 0
 
