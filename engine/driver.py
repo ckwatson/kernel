@@ -7,6 +7,7 @@
 import sys
 import os
 import logging
+from typing import Optional
 
 # These are the programs modules
 # from . import input_output
@@ -37,7 +38,7 @@ def equilibrate(input_model, progress_tick, in_conc=None, diag=False):
     return True
 
 
-def run_true_experiment(puzzle, condition, condition_path, progress_tick, stream=sys.stdout):
+def run_true_experiment(puzzle, condition, condition_path, progress_tick, stream=sys.stdout) -> np.ndarray:
     def show_all_concentrations():
         logger.info(
             "                    Update the concentration record of the whole lab:")
@@ -160,7 +161,7 @@ def run_true_experiment(puzzle, condition, condition_path, progress_tick, stream
 ###################################
 
 
-def run_proposed_experiment(puzzle, condition, condition_path, progress_tick, solution, solution_path, written_true_data=None, stream=sys.stdout):
+def run_proposed_experiment(puzzle, condition, condition_path, progress_tick, solution, solution_path, written_true_data=None, stream=sys.stdout) -> Optional[np.ndarray]:
     #sys.stdout = open(diag + "diagnostic_stdout_student_" + str(condition.reaction_temperature) + "_.dat", "w") if (temp_diag == True) else system_output
 
     # load the species from the true model
@@ -192,7 +193,7 @@ def run_proposed_experiment(puzzle, condition, condition_path, progress_tick, so
             # sys.stdout.close()
             #sys.stdout = system_output
             # input_output.write_failed_userData(condition.reaction_temperature, data_file_name = os.path.join(solution_path, "plotData_t_"))
-            return False
+            return None
         # if only one reaction is 'bad' then try to remove it and solve again
         elif(bad_rxn.size == 1):
 
@@ -214,7 +215,7 @@ def run_proposed_experiment(puzzle, condition, condition_path, progress_tick, so
                 # sys.stdout.close()
                 #sys.stdout = system_output
                 # input_output.write_failed_userData(condition.reaction_temperature, data_file_name = os.path.join(solution_path, "plotData_t_"))
-                return False
+                return None
 
         # completed try successfully
 
@@ -246,18 +247,14 @@ def run_proposed_experiment(puzzle, condition, condition_path, progress_tick, so
 
     # sys.stdout.close()
     #sys.stdout = system_output if (temp_diag == True) else sys.stdout
-    return written_data  # ?
-
-    del proposed_model  # speed up?
-
-    logger.info("            Successfully constructed proposed model.")
+    return written_data
 
 
 # just a wrapper for backwards compatibility until i replace all the places its used in the code
-def drive_data(puzzle, puzzle_path, condition, condition_path, progress_tick, solution=None, solution_path=None, written_true_data=None):
+def drive_data(puzzle, puzzle_path, condition, condition_path, progress_tick, solution=None, solution_path=None, written_true_data=None) -> Optional[np.ndarray]:
     #system_output = sys.stdout
     # if we are simulating the true_model then solution argument is none
-    if(solution == None):
+    if solution is None:
         return run_true_experiment(puzzle, condition, condition_path, progress_tick)
     else:
         return run_proposed_experiment(puzzle, condition, condition_path, progress_tick, solution, solution_path, written_true_data)
