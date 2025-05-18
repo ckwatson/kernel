@@ -60,9 +60,8 @@ def run_true_experiment(job_id: str, puzzle, condition) -> np.ndarray:
 
     table = tabulate([
         ["Starting Concentrations (mol)"]+starting_concentrations,
-        ["Reactant Rate Constants"]+(-true_model.reactant_rate_constants).tolist(),
+        ["Reactant Rate Constants"]+true_model.reactant_rate_constants.tolist(),
         ["Product Rate Constants"]+true_model.product_rate_constants.tolist(),
-        ["Effective Rate Constants"]+(true_model.product_rate_constants-true_model.reactant_rate_constants).tolist(),
         ["Theoretical K_eq"]+true_model.theoretical_Keq_array.tolist(),
         ["Experimental K_eq"]+true_model.experimental_Keq_array.tolist(),
     ],
