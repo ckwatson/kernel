@@ -9,7 +9,7 @@ import numpy as np
 from . import json_base_class
 from . import reagent
 
-class condition(json_base_class.Json_base):
+class Condition(json_base_class.Json_base):
     """The condition class"""
     # default file properties
     file_prefix = os.path.join(os.getcwd(), 'Puzzles')
@@ -44,9 +44,9 @@ class condition(json_base_class.Json_base):
             #                = [  'O',  'O2',  'O3',  'OH',   'OOH',  'HOOH',  'H2O',  'H2',    'H']
             #conc            = [  0.0,  10.0,   0.0,   0.0,    0.0,     0.0,    0.0,   20.0,    0.0]
 
-        test_condition = condition(rxn_temp, species, r_list, r_temps, r_concs, m_concs)
+        test_condition = Condition(rxn_temp, species, r_list, r_temps, r_concs, m_concs)
         test_condition.store(condition_file_name)
-        new_condition = condition.load_object(condition_file_name)
+        new_condition = Condition.load_object(condition_file_name)
         if(test_condition == new_condition):
             print("The condition was successfully stored and loaded, no data was lost")
             return True
@@ -72,7 +72,7 @@ class condition(json_base_class.Json_base):
 
     def __eq__(self, other):
         # this isn't robust enough
-        return (isinstance(other, condition) 
+        return (isinstance(other, Condition)
             and self.reaction_temperature           == other.reaction_temperature
             and self.reagent_temperatures           == other.reagent_temperatures
             and self.reagent_concentrations         == other.reagent_concentrations
@@ -106,4 +106,4 @@ class condition(json_base_class.Json_base):
         pass
 
 if(__name__ == "__main__"):
-    condition.test()
+    Condition.test()
