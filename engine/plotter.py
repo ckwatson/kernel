@@ -38,10 +38,10 @@ def fake_writer(plot):
     return '<svg viewBox="0 0 2520 1584">' + data.decode("utf-8")[367:]
 
 
-def sub_plots(plottingDict, written_true_data=None, written_user_data=None):
+def sub_plots(plottingDict, true_data=None, user_data=None):
     number_of_plots = len(plottingDict)
     # need to replace with logging
-    logger.info("entered Plotter.sub_plots.\n        Attempting to plot " +
+    logger.info("        (a) entered Plotter.sub_plots.\n        Attempting to plot " +
                 str(number_of_plots) + " concentration profiles.")
     # create the figure and determine the 'layout' of the subplots
     profiles = figure(figsize=(35, 22), dpi=80, facecolor='w',
@@ -50,25 +50,19 @@ def sub_plots(plottingDict, written_true_data=None, written_user_data=None):
                       edgecolor='k', tight_layout=True)  # figsize = (width, heigh)
     dimensions = int(np.ceil(np.sqrt(number_of_plots)))
     # need to replace with logging
-    logger.info("        (a) load 2 set of data:")
-    true_data = written_true_data
-    user_data = written_user_data
     logger.info("        (b) draw the plots:")
-
     rc('font', size=22)
-
     sub_combined = combined.add_subplot(
         111, title='Combined True Profile', xlabel='time', ylabel='Concentration')
-
     if user_data is not None:
         logger.info(
             '            Aligning shapes of userDataSet and trueDataSet.')
         # if the trueDataSet is shorter, extend it to match the length of the userDataSet
-        if(true_data.shape[1] < user_data.shape[1]):
+        if true_data.shape[1] < user_data.shape[1]:
             length_difference = user_data.shape[1] - true_data.shape[1]
             true_data = np.append(true_data, np.repeat(
                 true_data[:, -1].reshape((6, 1)), length_difference, axis=1), axis=1)
-        elif(true_data.shape[1] > user_data.shape[1]):
+        elif true_data.shape[1] > user_data.shape[1]:
             # if the trueDataSet is longer, truncate it to match the length of the userDataSet
             true_data = true_data[:, :user_data.shape[1]]
         # now that the shapes of the two datasets are aligned, we can sample them
@@ -108,7 +102,7 @@ def sub_plots(plottingDict, written_true_data=None, written_user_data=None):
     logger.info("                        [Combined]")
     combined = fake_writer(combined)
     logger.info("                        Done.")
-    return (profiles, combined)
+    return profiles, combined
 
 
 if __name__ == '__main__':
