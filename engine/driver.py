@@ -49,7 +49,7 @@ def show_all_concentrations(condition):
 def run_true_experiment(puzzle, condition) -> np.ndarray:
     logger = logging.getLogger("run_true_experiment")
     logger.info("            First, pre-equilibrate every reagent:")
-    # zero out all the condition objects molecule concentrations as a saftey measure
+    # zero out all the condition objects molecule concentrations as a safety measure
     # this should probably be made a funciton in the condition class at some later point
     for reagent_name, reagent_obj in puzzle.reagent_dict.items():
         logger.info("                Pre-equilibrate " + reagent_name + ":")
@@ -149,13 +149,11 @@ def run_true_experiment(puzzle, condition) -> np.ndarray:
                 HANDY.np_repr(true_model.theoretical_Keq_array)
                 + "\n                 Experimental  K_eq  " + HANDY.np_repr(true_model.experimental_Keq_array))
 
-    # sys.stdout.close()
-    #sys.stdout = system_output if (temp_diag == True) else sys.stdout
     del true_model
 
     logger.info("            True model sucessfully constructed.")
     return written_data
-###################################
+
 
 
 def run_proposed_experiment(condition, condition_path, solution, written_true_data=None) -> Optional[np.ndarray]:
@@ -233,8 +231,5 @@ def run_proposed_experiment(condition, condition_path, solution, written_true_da
 
     logger.info("            Rate Constant array " + HANDY.np_repr(proposed_model.rate_constant_array)
                 + "            Experimental  K_eq  " + HANDY.np_repr(proposed_model.experimental_Keq_array))
-
-    # sys.stdout.close()
-    #sys.stdout = system_output if (temp_diag == True) else sys.stdout
     return written_data
 
