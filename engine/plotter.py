@@ -14,8 +14,9 @@ from matplotlib import rc
 # Fixes "UserWarning: Starting a Matplotlib GUI outside of the main thread will likely fail".
 # https://stackoverflow.com/a/74471578/1147061
 import matplotlib
-matplotlib.use('agg')
-#from arrhenius import plot_arrhenius
+
+matplotlib.use("agg")
+# from arrhenius import plot_arrhenius
 from . import handy_functions as HANDY
 from . import experiment_class, fileIO
 
@@ -25,15 +26,35 @@ logger = logging.getLogger(__name__)
 
 # our colour 'array'
 # allows for more concise loop code
-colour = [0, 'b', 'g', 'r', 'c', 'm', 'y', 'k', '1', '0.75',
-          '0.65', '0.55', '0.45', '0.35', '0.25', '0.25', '0.15']
+colour = [
+    0,
+    "b",
+    "g",
+    "r",
+    "c",
+    "m",
+    "y",
+    "k",
+    "1",
+    "0.75",
+    "0.65",
+    "0.55",
+    "0.45",
+    "0.35",
+    "0.25",
+    "0.25",
+    "0.15",
+]
 if_SkipDrawingSpeciesWithZeroConcentrations = True
 newSize = 100
-def sampler(array): return array[:, ::array.shape[1] // newSize]
+
+
+def sampler(array):
+    return array[:, :: array.shape[1] // newSize]
 
 
 def fake_writer(plot):
-    '''this function tricks matplotlib into writing figure into memory instead of an actual file on disk.'''
+    """this function tricks matplotlib into writing figure into memory instead of an actual file on disk."""
     buf = io.BytesIO()
     plot.savefig(buf, format="svg")
     buf.seek(0)
@@ -45,59 +66,108 @@ def fake_writer(plot):
 def sub_plots(plottingDict, true_data=None, user_data=None):
     number_of_plots = len(plottingDict)
     # need to replace with logging
-    logger.info("        (a) entered Plotter.sub_plots.\n        Attempting to plot " +
-                str(number_of_plots) + " concentration profiles.")
+    logger.info(
+        "        (a) entered Plotter.sub_plots.\n        Attempting to plot "
+        + str(number_of_plots)
+        + " concentration profiles."
+    )
     # create the figure and determine the 'layout' of the subplots
-    profiles = figure(figsize=(35, 22), dpi=80, facecolor='w',
-                      edgecolor='k', tight_layout=True)  # figsize = (width, heigh)
-    combined = figure(figsize=(35, 22), dpi=80, facecolor='w',
-                      edgecolor='k', tight_layout=True)  # figsize = (width, heigh)
+    profiles = figure(
+        figsize=(35, 22), dpi=80, facecolor="w", edgecolor="k", tight_layout=True
+    )  # figsize = (width, heigh)
+    combined = figure(
+        figsize=(35, 22), dpi=80, facecolor="w", edgecolor="k", tight_layout=True
+    )  # figsize = (width, heigh)
     dimensions = int(np.ceil(np.sqrt(number_of_plots)))
     # need to replace with logging
     logger.info("        (b) draw the plots:")
-    rc('font', size=22)
+    rc("font", size=22)
     sub_combined = combined.add_subplot(
-        111, title='Combined True Profile', xlabel='time', ylabel='Concentration')
+        111, title="Combined True Profile", xlabel="time", ylabel="Concentration"
+    )
     if user_data is not None:
-        logger.info(
-            '            Aligning shapes of userDataSet and trueDataSet.')
+        logger.info("            Aligning shapes of userDataSet and trueDataSet.")
         # if the trueDataSet is shorter, extend it to match the length of the userDataSet
         if true_data.shape[1] < user_data.shape[1]:
             length_difference = user_data.shape[1] - true_data.shape[1]
-            true_data = np.append(true_data, np.repeat(
-                true_data[:, -1].reshape((6, 1)), length_difference, axis=1), axis=1)
+            true_data = np.append(
+                true_data,
+                np.repeat(true_data[:, -1].reshape((6, 1)), length_difference, axis=1),
+                axis=1,
+            )
         elif true_data.shape[1] > user_data.shape[1]:
             # if the trueDataSet is longer, truncate it to match the length of the userDataSet
-            true_data = true_data[:, :user_data.shape[1]]
+            true_data = true_data[:, : user_data.shape[1]]
         # now that the shapes of the two datasets are aligned, we can sample them
         user_data_sampled = sampler(user_data)
         # pre-cache x-datapoints for userDataSet
         data_x_user = user_data_sampled[0, :]
     true_data_sampled = sampler(true_data)
     data_x_true = true_data_sampled[0, :]
-    logger.info("            Lossy-compressing true_data by selecting only " + str(newSize) + ' items, which means a span of every ' +
-                str(true_data.shape[1] / newSize) + ' items.\n            The true_data is compressed from ' + str(true_data.shape) + ' to ' + str(true_data_sampled.shape) + '.')
+    logger.info(
+        "            Lossy-compressing true_data by selecting only "
+        + str(newSize)
+        + " items, which means a span of every "
+        + str(true_data.shape[1] / newSize)
+        + " items.\n            The true_data is compressed from "
+        + str(true_data.shape)
+        + " to "
+        + str(true_data_sampled.shape)
+        + "."
+    )
     logger.info("            Drawing curves for:")
     # now for every species to be plotted:
     for plot_info, (name, location) in enumerate(plottingDict.items(), start=1):
         logger.info(name)
         sub_individual = profiles.add_subplot(
-            dimensions, dimensions, plot_info, title='Concentration Profile of ' + name, xlabel='time', ylabel='[' + name + ']')
+            dimensions,
+            dimensions,
+            plot_info,
+            title="Concentration Profile of " + name,
+            xlabel="time",
+            ylabel="[" + name + "]",
+        )
         # first true model:
         data_y_this = true_data_sampled[location + 1, :]
-        if not (if_SkipDrawingSpeciesWithZeroConcentrations and not any(y != 0 for y in data_y_this)):
+        if not (
+            if_SkipDrawingSpeciesWithZeroConcentrations
+            and not any(y != 0 for y in data_y_this)
+        ):
             sub_individual.plot(
-                data_x_true, data_y_this, colour[1], label='True ' + '[' + name + ']', linestyle="-")
-            sub_combined.  plot(
-                data_x_true, data_y_this, colour[plot_info + 2], label='True ' + '[' + name + ']', linestyle="-")
+                data_x_true,
+                data_y_this,
+                colour[1],
+                label="True " + "[" + name + "]",
+                linestyle="-",
+            )
+            sub_combined.plot(
+                data_x_true,
+                data_y_this,
+                colour[plot_info + 2],
+                label="True " + "[" + name + "]",
+                linestyle="-",
+            )
         # then user model:
         if user_data is not None:
             data_y_this = user_data_sampled[location + 1, :]
-            if not (if_SkipDrawingSpeciesWithZeroConcentrations and not any(y != 0 for y in data_y_this)):
+            if not (
+                if_SkipDrawingSpeciesWithZeroConcentrations
+                and not any(y != 0 for y in data_y_this)
+            ):
                 sub_individual.plot(
-                    data_x_user, data_y_this, colour[2], label='User ' + '[' + name + ']', linestyle="--")
+                    data_x_user,
+                    data_y_this,
+                    colour[2],
+                    label="User " + "[" + name + "]",
+                    linestyle="--",
+                )
                 sub_combined.plot(
-                    data_x_user, data_y_this, colour[plot_info + 2], label='User ' + '[' + name + ']', linestyle="--")
+                    data_x_user,
+                    data_y_this,
+                    colour[plot_info + 2],
+                    label="User " + "[" + name + "]",
+                    linestyle="--",
+                )
         # sub_individual.legend()
     sub_combined.legend()
     logger.info("        (c) Saving SVG: [Individual]")
@@ -109,5 +179,5 @@ def sub_plots(plottingDict, true_data=None, user_data=None):
     return profiles, combined
 
 
-if __name__ == '__main__':
-    logger.info('Successfully loaded Plotter.py.')
+if __name__ == "__main__":
+    logger.info("Successfully loaded Plotter.py.")

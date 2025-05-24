@@ -12,7 +12,12 @@ from . import experiment_class
 from . import handy_functions as HANDY
 import numpy as np
 
-from ..data import solution_class, condition_class, reaction_mechanism_class, puzzle_class
+from ..data import (
+    solution_class,
+    condition_class,
+    reaction_mechanism_class,
+    puzzle_class,
+)
 
 diag = os.path.join("Diagnose" + os.sep)
 graph = os.path.join("Graphs" + os.sep)
@@ -32,10 +37,12 @@ def equilibrate(input_model: experiment_class.experiment, diag=False):
     input_model.remove_flat_region()
 
 
-def run_true_experiment(job_id: str, puzzle: puzzle_class.puzzle,
-                        condition: condition_class.Condition,
-                        diag=False,
-                        ) -> np.ndarray:
+def run_true_experiment(
+    job_id: str,
+    puzzle: puzzle_class.puzzle,
+    condition: condition_class.Condition,
+    diag=False,
+) -> np.ndarray:
     logger = logging.getLogger(job_id).getChild("run_true_experiment")
     logger.info("            First, pre-equilibrate every reagent:")
     for reagent_name, mechanism in puzzle.reagent_dict.items():
@@ -43,39 +50,60 @@ def run_true_experiment(job_id: str, puzzle: puzzle_class.puzzle,
 
     # now that we have left the loop over REAGENTS we have pre-equilibrated all necessary REAGENTS
     logger.info(
-        "            Pre-equilibration finished -- now all reagents are under pre-equilibrium.")
+        "            Pre-equilibration finished -- now all reagents are under pre-equilibrium."
+    )
     # this temp array seems to be due to a change in the parameter specs for the experiment objects instantiation method
     # basically a quick hack that needs to be factorized/cleaned up
 
-    sorted_species_names = sorted(puzzle.coefficient_dict, key=puzzle.coefficient_dict.get)
-    starting_concentrations = [condition.molecule_concentrations[name] for name in
-                      sorted_species_names]
+    sorted_species_names = sorted(
+        puzzle.coefficient_dict, key=puzzle.coefficient_dict.get
+    )
+    starting_concentrations = [
+        condition.molecule_concentrations[name] for name in sorted_species_names
+    ]
 
     # this is the experiment object that represents the "actual reaction"
     true_model = experiment_class.experiment(
-        puzzle, condition.reaction_temperature, input_time=[0.0],
-        rxn_profile=np.array([starting_concentrations]))
+        puzzle,
+        condition.reaction_temperature,
+        input_time=[0.0],
+        rxn_profile=np.array([starting_concentrations]),
+    )
     # now we perform the same mathematical operations as before, but this time we have all the molecules present instead of isolated reactions
     logger.info(
-        "            Now we can finally let the actual reaction happen -- let's pour everything into the beaker:")
+        "            Now we can finally let the actual reaction happen -- let's pour everything into the beaker:"
+    )
     equilibrate(true_model, diag=diag)  # the magical math happens
 
-    table = tabulate([
-        ["Starting Concentrations (mol)"]+starting_concentrations,
-        ["Reactant Rate Constants"]+true_model.reactant_rate_constants.tolist(),
-        ["Product Rate Constants"]+true_model.product_rate_constants.tolist(),
-        ["Theoretical K_eq"]+true_model.theoretical_Keq_array.tolist(),
-        ["Experimental K_eq"]+true_model.experimental_Keq_array.tolist(),
-    ],
-                     headers=sorted_species_names,
-                     floatfmt=".4g", tablefmt="github")
-    logger.info('            True model successfully constructed: \n%s\n            For `K_eq`, use the "theoretical" value, since this is a source-of-truth experiment. (The "theoretical" and the "empirical" values should match, though.)', table)
+    table = tabulate(
+        [
+            ["Starting Concentrations (mol)"] + starting_concentrations,
+            ["Reactant Rate Constants"] + true_model.reactant_rate_constants.tolist(),
+            ["Product Rate Constants"] + true_model.product_rate_constants.tolist(),
+            ["Theoretical K_eq"] + true_model.theoretical_Keq_array.tolist(),
+            ["Experimental K_eq"] + true_model.experimental_Keq_array.tolist(),
+        ],
+        headers=sorted_species_names,
+        floatfmt=".4g",
+        tablefmt="github",
+    )
+    logger.info(
+        '            True model successfully constructed: \n%s\n            For `K_eq`, use the "theoretical" value, since this is a source-of-truth experiment. (The "theoretical" and the "empirical" values should match, though.)',
+        table,
+    )
     # Return a 2D array with the first column being timestamps and the rest being the concentrations of each species.
-    return np.transpose(np.column_stack(
-        [true_model.time_array, true_model.reaction_profile]))
+    return np.transpose(
+        np.column_stack([true_model.time_array, true_model.reaction_profile])
+    )
 
 
-def preequilibrate_reagent(job_id: str, mechanism: reaction_mechanism_class.reaction_mechanism, condition: condition_class.Condition, reagent_name: str, diag: bool = False) -> None:
+def preequilibrate_reagent(
+    job_id: str,
+    mechanism: reaction_mechanism_class.reaction_mechanism,
+    condition: condition_class.Condition,
+    reagent_name: str,
+    diag: bool = False,
+) -> None:
     """
     Some reagents may dissociate into multiple species even when sitting ideally in a canister/beaker, so we need to
     pre-equilibrate them.
@@ -123,7 +151,8 @@ def preequilibrate_reagent(job_id: str, mechanism: reaction_mechanism_class.reac
         logger.info(
             "                        This reagent only has one species so no pre-equilibration happened. "
             "This reagent will join the experiment with the user-specified concentration of %s mol.",
-            user_specified_concentration)
+            user_specified_concentration,
+        )
         # then directly add the reagents concentrations to their associated molecule concentrations
         condition.molecule_concentrations[reagent_name] += user_specified_concentration
     else:
@@ -138,7 +167,7 @@ def preequilibrate_reagent(job_id: str, mechanism: reaction_mechanism_class.reac
         pre_equil_model = experiment_class.experiment(
             mechanism,
             condition.reagent_temperatures[reagent_name],
-            rxn_profile=np.array([starting_concentrations])
+            rxn_profile=np.array([starting_concentrations]),
         )
 
         # actually preform the mathematical calculations
@@ -147,31 +176,58 @@ def preequilibrate_reagent(job_id: str, mechanism: reaction_mechanism_class.reac
         equilibrate(pre_equil_model, diag=diag)
         final_concentrations = pre_equil_model.reaction_profile[-1]
 
-        table = tabulate([starting_concentrations, final_concentrations],
-                         headers=sorted(mechanism.coefficient_dict.keys(), key=mechanism.coefficient_dict.get),
-                         floatfmt=".4g", tablefmt="github")
-        logger.info("                        Concentrations before and after pre-equilibration: \n%s", table)
+        table = tabulate(
+            [starting_concentrations, final_concentrations],
+            headers=sorted(
+                mechanism.coefficient_dict.keys(), key=mechanism.coefficient_dict.get
+            ),
+            floatfmt=".4g",
+            tablefmt="github",
+        )
+        logger.info(
+            "                        Concentrations before and after pre-equilibration: \n%s",
+            table,
+        )
 
         # Now that we have the pre-equilibrated concentrations, place them into the condition object.
         for name, index in mechanism.coefficient_dict.items():
             concentration_of_this_species = final_concentrations[index]
             if np.isnan(concentration_of_this_species):
-                logger.warning('                 Concentration of "%s" is NaN. Falling back to un-pre-equilibrated concentrations. This is a bug.', name)
+                logger.warning(
+                    '                 Concentration of "%s" is NaN. Falling back to un-pre-equilibrated concentrations. This is a bug.',
+                    name,
+                )
                 concentration_of_this_species = starting_concentrations[index]
             condition.molecule_concentrations[name] += concentration_of_this_species
 
     # collect the equilibrated concentrations
-    table = tabulate([condition.molecule_concentrations.values()],
-                     headers=condition.molecule_concentrations.keys(),
-                     floatfmt=".4g", tablefmt="github")
-    logger.info("                    Updated concentrations of all reagents before the main experiment take place:\n%s", table)
+    table = tabulate(
+        [condition.molecule_concentrations.values()],
+        headers=condition.molecule_concentrations.keys(),
+        floatfmt=".4g",
+        tablefmt="github",
+    )
+    logger.info(
+        "                    Updated concentrations of all reagents before the main experiment take place:\n%s",
+        table,
+    )
 
 
-def run_proposed_experiment(job_id: str, condition: condition_class.Condition, solution: solution_class.solution, data=np.ndarray, diag=False) -> Optional[np.ndarray]:
+def run_proposed_experiment(
+    job_id: str,
+    condition: condition_class.Condition,
+    solution: solution_class.solution,
+    data=np.ndarray,
+    diag=False,
+) -> Optional[np.ndarray]:
     logger = logging.getLogger(job_id).getChild("run_proposed_experiment")
 
     proposed_model = experiment_class.experiment(
-        solution, condition.reaction_temperature, input_time=data[0], rxn_profile=data[1:].T)
+        solution,
+        condition.reaction_temperature,
+        input_time=data[0],
+        rxn_profile=data[1:].T,
+    )
 
     try:
         # try to find the rate constants
@@ -184,16 +240,20 @@ def run_proposed_experiment(job_id: str, condition: condition_class.Condition, s
         # if more than one reaction has forward and backward rate constants of negative value then crash
         if bad_rxn.size > 1:
 
-            logger.info("An issue has been detected. Reactions "
-                        + str(bad_rxn + 1)
-                        + " are unstable.\n Cannot proceed with user reaction, input new reaction.")
+            logger.info(
+                "An issue has been detected. Reactions "
+                + str(bad_rxn + 1)
+                + " are unstable.\n Cannot proceed with user reaction, input new reaction."
+            )
             return None
         # if only one reaction is 'bad' then try to remove it and solve again
         elif bad_rxn.size == 1:
 
-            logger.info("An issue has been detected. Reaction "
-                        + str(bad_rxn[0] + 1)
-                        + " is unstable. \n Trying to correct simulation by removing reaction.")
+            logger.info(
+                "An issue has been detected. Reaction "
+                + str(bad_rxn[0] + 1)
+                + " is unstable. \n Trying to correct simulation by removing reaction."
+            )
             try:
                 proposed_model.remove_rxn(bad_rxn[0])
 
@@ -202,9 +262,11 @@ def run_proposed_experiment(job_id: str, condition: condition_class.Condition, s
 
             # if we fail again then crash
             except HANDY.NegativeCoefficientException:
-                logger.error("Another issue has been detected. Reaction "
-                             + str(bad_rxn[0] + 1)
-                             + " is unstable. \n Cannot proceed, crashing.")
+                logger.error(
+                    "Another issue has been detected. Reaction "
+                    + str(bad_rxn[0] + 1)
+                    + " is unstable. \n Cannot proceed, crashing."
+                )
                 return None
 
         # completed try successfully
@@ -213,22 +275,33 @@ def run_proposed_experiment(job_id: str, condition: condition_class.Condition, s
     proposed_model.find_reaction_rate_function()
 
     # calculate the new reaction profile
-    sorted_species_names = sorted(solution.coefficient_dict.keys(), key=solution.coefficient_dict.get)
-    input_concentrations = [condition.molecule_concentrations[name] for name in sorted_species_names]
+    sorted_species_names = sorted(
+        solution.coefficient_dict.keys(), key=solution.coefficient_dict.get
+    )
+    input_concentrations = [
+        condition.molecule_concentrations[name] for name in sorted_species_names
+    ]
     proposed_model.find_reaction_profile(
-        input_concentration=np.array(input_concentrations),
-        diagnostic_output=diag)
+        input_concentration=np.array(input_concentrations), diagnostic_output=diag
+    )
     proposed_model.remove_flat_region()
     # TODO: ??? Missing a species????
-    table = tabulate([
-        ["Starting Concentrations (mol)"] + input_concentrations,
-        ["Reactant Rate Constants"] + proposed_model.reactant_rate_constants.tolist(),
-        ["Product Rate Constants"] + proposed_model.product_rate_constants.tolist(),
-        ["Experimental K_eq"] + proposed_model.experimental_Keq_array.tolist(),],
-                     headers=sorted_species_names,
-                     floatfmt=".4g", tablefmt="github")
+    table = tabulate(
+        [
+            ["Starting Concentrations (mol)"] + input_concentrations,
+            ["Reactant Rate Constants"]
+            + proposed_model.reactant_rate_constants.tolist(),
+            ["Product Rate Constants"] + proposed_model.product_rate_constants.tolist(),
+            ["Experimental K_eq"] + proposed_model.experimental_Keq_array.tolist(),
+        ],
+        headers=sorted_species_names,
+        floatfmt=".4g",
+        tablefmt="github",
+    )
     logger.info(
         '            User-proposed model successfully constructed: \n%s\n            For `K_eq`, the "theoretical" value is not available, since we are pretending to be conducting this experiment in a laboratory and measuring things live.',
-        table)
-    return np.transpose(np.column_stack(
-        [proposed_model.time_array, proposed_model.reaction_profile]))
+        table,
+    )
+    return np.transpose(
+        np.column_stack([proposed_model.time_array, proposed_model.reaction_profile])
+    )

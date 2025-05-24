@@ -7,20 +7,30 @@ from ..data.reagent import reagent
 from ..data.puzzle_class import puzzle
 from ..data.solution_class import solution
 
+
 def name(class_obj):
-	return class_obj.__name__
+    return class_obj.__name__
+
 
 if __name__ == "__main__":
-	# depends on JSON base class
-	for class_being_tested in [molecular_species, Condition, reaction_mechanism, reagent, puzzle, solution]:
-		system_output = sys.stdout # store stdout
-		sys.stdout = open(os.getcwd() + "/testing_result_" + name(class_being_tested) + ".txt", "w") # pipe to file
-		test_result = class_being_tested.test()
-		sys.stdout.close() # close file
-		sys.stdout = system_output #replace stdout
+    # depends on JSON base class
+    for class_being_tested in [
+        molecular_species,
+        Condition,
+        reaction_mechanism,
+        reagent,
+        puzzle,
+        solution,
+    ]:
+        system_output = sys.stdout  # store stdout
+        sys.stdout = open(
+            os.getcwd() + "/testing_result_" + name(class_being_tested) + ".txt", "w"
+        )  # pipe to file
+        test_result = class_being_tested.test()
+        sys.stdout.close()  # close file
+        sys.stdout = system_output  # replace stdout
 
-		if test_result:
-			print("PASSED", name(class_being_tested), sep="    ")
-		else:
-			print("FAILED", name(class_being_tested), sep="    ")
-
+        if test_result:
+            print("PASSED", name(class_being_tested), sep="    ")
+        else:
+            print("FAILED", name(class_being_tested), sep="    ")
