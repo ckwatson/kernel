@@ -170,8 +170,6 @@ def preequilibrate_reagent(job_id: str, mechanism: reaction_mechanism_class.reac
 def run_proposed_experiment(job_id: str, condition: condition_class.Condition, solution: solution_class.solution, data=np.ndarray, diag=False) -> Optional[np.ndarray]:
     logger = logging.getLogger(job_id).getChild("run_proposed_experiment")
 
-    # make the experiment object
-
     proposed_model = experiment_class.experiment(
         solution, condition.reaction_temperature, input_time=data[0], rxn_profile=data[1:].T)
 
@@ -215,16 +213,22 @@ def run_proposed_experiment(job_id: str, condition: condition_class.Condition, s
     proposed_model.find_reaction_rate_function()
 
     # calculate the new reaction profile
-    temp = np.zeros(solution.number_of_species)
-    logger.info(condition.molecule_concentrations)
-    for name, value in solution.coefficient_dict.items():
-        temp[value] = condition.molecule_concentrations[name]
-
-    logger.info("            Concentrations: " + str(temp))
+    sorted_species_names = sorted(solution.coefficient_dict.keys(), key=solution.coefficient_dict.get)
+    input_concentrations = [condition.molecule_concentrations[name] for name in sorted_species_names]
     proposed_model.find_reaction_profile(
-        input_concentration=temp, diagnostic_output=diag)
+        input_concentration=np.array(input_concentrations),
+        diagnostic_output=diag)
     proposed_model.remove_flat_region()
-    logger.info("            Rate Constant array " + HANDY.np_repr(proposed_model.rate_constant_array)
-                + "            Experimental  K_eq  " + HANDY.np_repr(proposed_model.experimental_Keq_array))
+    # TODO: ??? Missing a species????
+    table = tabulate([
+        ["Starting Concentrations (mol)"] + input_concentrations,
+        ["Reactant Rate Constants"] + proposed_model.reactant_rate_constants.tolist(),
+        ["Product Rate Constants"] + proposed_model.product_rate_constants.tolist(),
+        ["Experimental K_eq"] + proposed_model.experimental_Keq_array.tolist(),],
+                     headers=sorted_species_names,
+                     floatfmt=".4g", tablefmt="github")
+    logger.info(
+        '            User-proposed model successfully constructed: \n%s\n            For `K_eq`, the "theoretical" value is not available, since we are pretending to be conducting this experiment in a laboratory and measuring things live.',
+        table)
     return np.transpose(np.column_stack(
         [proposed_model.time_array, proposed_model.reaction_profile]))
