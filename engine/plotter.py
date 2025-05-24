@@ -11,6 +11,10 @@ import numpy as np
 from matplotlib.pyplot import figure, close
 from matplotlib import rc
 
+# Fixes "UserWarning: Starting a Matplotlib GUI outside of the main thread will likely fail".
+# https://stackoverflow.com/a/74471578/1147061
+import matplotlib
+matplotlib.use('agg')
 #from arrhenius import plot_arrhenius
 from . import handy_functions as HANDY
 from . import experiment_class, fileIO
