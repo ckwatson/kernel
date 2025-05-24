@@ -127,9 +127,9 @@ class molecular_species(json_base_class.Json_base):
     def default_object(cls):
         return cls('H', 0.0, {'H' : 1})         
 
-    name = "H"
-    energy = 0.0
-    atom_list = { 'H' : 1 }
+    name = None
+    energy = None
+    atom_list = None
 
     def __init__(self, molecule_name, gibbs_free_energy, atom_list = None, *args, **kw_args):
         # handle molecule JSON serialization properly
