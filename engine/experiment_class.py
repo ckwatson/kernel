@@ -608,9 +608,10 @@ class experiment:
         logger.debug(f"               dS/dt is of shape {dSdt.shape}.")
         # get the concentration values and trim the dSdt to match the sample size
         conc_x = self.slice_array_by_time(
-            job_id,
-            experiment.RATE_CONSTANT_EXTRACTION_START_POINT,
-            experiment.RATE_CONSTANT_EXTRACTION_END_POINT,
+            job_id=job_id,
+            array_to_slice=self.reaction_profile,
+            start=experiment.RATE_CONSTANT_EXTRACTION_START_POINT,
+            end=experiment.RATE_CONSTANT_EXTRACTION_END_POINT,
         )
         logger.debug(f"               Concentrations over the selected period of time is in an array of shape {conc_x.shape}:"
             + "\n                 " + HANDY.np_repr(conc_x).replace("\n", "\n                 "))
