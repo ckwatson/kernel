@@ -786,15 +786,21 @@ class experiment:
         # Sample 1% moments of the reaction profile (but no more than 100 and at least 10, unless we don't have
         # that many time steps, in each case we use all time steps) to find the flat region.
         N = self.time_array.shape[0]
-        num_samples = min(N, 100, max(10, N // 100))
-        stride = min(1, N // num_samples)
+        # Ideally, we want to sample 1% of the reaction profile. How many time-steps is that?
+        n = N // 100
+        # We want to sample at least 10 time-steps.
+        n = max(n, 10)
+        # But we don't want to sample more than 100 time-steps.
+        n = min(n, 100)
+        # If we have less than 100 time-steps, we sample all of them.
+        num_samples = min(N, n)
+        stride = max(1, N // num_samples)
         logger.info(f"               Sampling the reaction profile every {stride} time-steps to find the flat region."
-                    f" That's {num_samples} points sampled.")
+                    f" That's {num_samples} points sampled from {N} time-steps available.")
         sampled_profile = self.reaction_profile[::stride]
-
         has_flat_region = False
         for i in range(1, len(sampled_profile)):
-            if np.all(np.abs(sampled_profile[i] - sampled_profile[i - 1]) < threshold):
+            if np.allclose(sampled_profile[i], sampled_profile[i - 1], atol=threshold):
                 has_flat_region = True
                 break
         if not has_flat_region:
