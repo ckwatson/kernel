@@ -526,36 +526,38 @@ class experiment:
         """
         logger = logging.getLogger(job_id).getChild("get_reaction_profile")
         if start is None or end is None:
-            logger.info("No slice input provided, returning the full reaction profile.")
+            logger.info("               No slice input provided, returning the full reaction profile.")
             return self.reaction_profile
         start_time = float(start)
         end_time = float(end)
         # Boundary checks for the start and end times.
         if end_time >= self.time_array[-1]:
             logger.warning(
-                f"End time selected, {end_time}, is larger than the time-array. "
+                f"               End time selected, {end_time}, is larger than the time-array. "
                 f"Slicing up to the last available time, {self.time_array[-1]}.")
             end_time = self.time_array[-1]
         if start_time >= self.time_array[-1]:
             logger.warning(
-                f"Start time selected, {start_time}, is larger than the time-array. "
+                f"               Start time selected, {start_time}, is larger than the time-array. "
                 f"Slicing up to the last available time, {self.time_array[-1]}.")
             start_time = self.time_array[-1]
         if start_time < self.time_array[0]:
             logger.warning(
-                f"Start time selected, {start_time}, is smaller than the first time value. "
+                f"               Start time selected, {start_time}, is smaller than the first time value. "
                 f"Slicing from the first available time, {self.time_array[0]}.")
             start_time = self.time_array[0]
         if end_time < self.time_array[0]:
             logger.warning(
-                f"End time selected, {end_time}, is smaller than the first time value. "
+                f"               End time selected, {end_time}, is smaller than the first time value. "
                 f"Slicing from the first available time, {self.time_array[0]}.")
             end_time = self.time_array[0]
         if start_time > end_time:
             logger.warning(
-                f"Start time {start_time} should be earlier than end time {end_time}. Reversing the order.")
+                f"               Start time {start_time} should be earlier than end time {end_time}. "
+                f"Reversing the order.")
             start_time, end_time = end_time, start_time
-        logger.info(f"Slicing the {start_time}~{end_time} part from the time-array with a length of {self.time_array[-1]}.")
+        logger.info(f"               Slicing the {start_time}~{end_time} part from the time-array with a length of "
+                    f"{self.time_array[-1]:.2f}.")
         # creating the masking array to select the sliced versions of the reaction_profile.
         condition = (self.time_array >= start_time) & (self.time_array <= end_time)
         return self.reaction_profile[condition, :]
