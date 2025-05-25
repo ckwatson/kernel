@@ -217,7 +217,7 @@ def run_proposed_experiment(
     job_id: str,
     condition: condition_class.Condition,
     solution: solution_class.solution,
-    data=np.ndarray,
+    data: np.ndarray,
     diag=False,
 ) -> Optional[np.ndarray]:
     logger = logging.getLogger(job_id).getChild("run_proposed_experiment")
@@ -228,7 +228,6 @@ def run_proposed_experiment(
         input_time=data[0],
         rxn_profile=data[1:].T,
     )
-
     try:
         # try to find the rate constants
         rate_constants = proposed_model.get_matrix_rate_solution(job_id = job_id)
