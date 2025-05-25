@@ -777,30 +777,31 @@ class experiment:
 
         return self.rate_constant_array
 
-    def remove_flat_region(self, job_id: str, threshold: float =1e-15):
+    def remove_flat_region(self, job_id: str, threshold: float = 1e-15):
         """
-        This method trims the reaction profile to remove the flat region at the end of the profile.
-        It identifies the point where the change in concentration between consecutive time steps is below a specified threshold.
-        The time array and reaction profile are then trimmed to this point.
+        The simulation may have run way longer than necessary, resulting in a flat region in the reaction profile.
+        This makes the graph hard to read, so we want to remove the flat region at the end of the reaction profile.
         """
         logger = logging.getLogger(job_id).getChild("remove_flat_region")
-        logger.info("               Removing flat region from the reaction profile.")
-        # Sample the reaction profile at regular intervals
-        sampled_profile = self.reaction_profile[:: self.reaction_profile.shape[0] // 20]
+        # Sample 1% moments of the reaction profile (but at least 5 and no more than 50) to find the flat region.
+        N = self.time_array.shape[0]
+        num_samples = min(50, max(5, N // 100))
+        stride = N // num_samples
+        logger.info(f"               Sampling the reaction profile every {stride} time-steps to find the flat region."
+                    f" That's {num_samples} points sampled.")
+        sampled_profile = self.reaction_profile[::stride]
 
-        # Find the first point where the change between consecutive lines is below the threshold
         for i in range(1, len(sampled_profile)):
-           if np.all(np.abs(sampled_profile[i] - sampled_profile[i - 1]) < threshold):
-               break
+            if np.all(np.abs(sampled_profile[i] - sampled_profile[i - 1]) < threshold):
+                break
 
-        # Log the percentage of the profile where equilibrium is reached
+        cutoff = stride * i
         logger.info(
-           f"               Concentrations approximately reach equilibrium at {i / len(sampled_profile) * 100:.2f}% "
-           f"of the calculated length (time-step: {i})."
+            f"               Concentrations approximately reach equilibrium at {i / len(sampled_profile) * 100:.2f}% "
+            f"of the calculated length (time-step: {i}). Cutting off the reaction profile at {cutoff} time-steps."
         )
-        # Trim the time array and reaction profile up to the identified point
-        self.time_array = self.time_array[: self.time_array.shape[0] // 500 * i]
-        self.reaction_profile = self.reaction_profile[: self.reaction_profile.shape[0] // 500 * i]
+        self.time_array = self.time_array[:cutoff]
+        self.reaction_profile = self.reaction_profile[:cutoff]
 
 if __name__ == "__main__":
     logger.info("succesfully imported experiment_class")
