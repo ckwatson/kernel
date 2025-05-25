@@ -718,24 +718,9 @@ class experiment:
         # 	+ "\n Masked evals: " + HANDY.np_repr(masked_e_values))
         for a in range(self.number_of_reactions):
             for b in range(self.number_of_reactions):
-                # logger.debug("====================================================================================================")
-                # logger.debug("======== np.multiply(e_vectors[a,:], e_vectors[b,:]): "+str( np.multiply(e_vectors[a,:], e_vectors[b,:]) ))
-                # logger.debug("================ masked_e_values[:]: "+str( masked_e_values[:] ))
-                # logger.debug("======== np.divide(%, masked_e_values[:]): "+str( np.divide(np.multiply(e_vectors[a,:], e_vectors[b,:]), masked_e_values[:]) ))
-                # logger.debug("======== np.sum@%: "+str( np.sum(np.divide(np.multiply(e_vectors[a,:], e_vectors[b,:]), masked_e_values[:])) ))
-                # logger.debug("======== np.nan_to_num@%: "+str( np.nan_to_num(np.float_(np.sum(np.divide(np.multiply(e_vectors[a,:], e_vectors[b,:]), masked_e_values[:])))) ))
-                M_inverse[a, b] = np.nan_to_num(
-                    np.float_(
-                        np.sum(
-                            np.divide(
-                                np.multiply(e_vectors[a, :], e_vectors[b, :]),
-                                masked_e_values[:],
-                            )
-                        )
-                    )
-                )
-            # for b
-        # for a
+                M_inverse[a, b] = np.sum(e_vectors[a, :] * e_vectors[b, :] / masked_e_values)
+
+        M_inverse = np.nan_to_num(M_inverse)
 
         # print out the forward rate constants
         f_guess = np.asfarray(M_inverse * X)
