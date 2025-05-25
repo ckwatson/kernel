@@ -79,7 +79,7 @@ def sub_plots(job_id: str,plottingDict: Dict[str, int], true_data=None, user_dat
         1,1,1, title="Combined True Profile", xlabel="time", ylabel="Concentration"
     )
     if user_data is not None:
-        true_data = make_same_length(true_data, user_data)
+        true_data = make_same_length(job_id, true_data, user_data)
         # now that the shapes of the two datasets are aligned, we can sample them
         user_data_sampled = user_data[:, :: user_data.shape[1] // newSize]
         # pre-cache x-datapoints for userDataSet
