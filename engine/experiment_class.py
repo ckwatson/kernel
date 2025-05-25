@@ -53,9 +53,6 @@ class experiment:
         273.15  # units are Kelvin (equivalent to 0 degrees Celsius)
     )
     STANDARD_TEMPERATURE = 298.15  # units are Kelvin (equivalent to 25 degrees Celsius)
-    EXPERIMENTAL_KEQ_SAMPLING_RANGE = (
-            2 / 3
-    )  # assume the reaction has reached equilibrium in the last third of the reaction
     EIGENVALUE_TOLERANCE = 1e-12  # mask values lower than the tolerance when calculating the rate constants
 
     # choose a range of concentration values from which the (k, k-1) are calculated
@@ -333,24 +330,22 @@ class experiment:
         The Keq can be determined by a ratio of concentrations of species when the reaction profile has reached a 'plateau'.
         """
         logger = logging.getLogger(job_id).getChild("find_experimental_Keq_array")
-        # select a point in the reaction profile which is approximately the begining of the 'plateau'
-        initial_timestep = np.int16(
-            self.reaction_profile.shape[0] * experiment.EXPERIMENTAL_KEQ_SAMPLING_RANGE
-        )
-        # calculate the average of each chemical specise over this 'plateau', concentrations = ['S1'mean, 'S2'mean, ...., 'Sa'mean]
+        logger.debug("               Finding Keq array empirically...")
+        # Select a point in the reaction profile which is approximately the beginning of the 'plateau'.
+        initial_timestep = self.find_flat_region(job_id, remove=False)
+        # Calculate the average of each chemical species over this 'plateau'.
+        # This is the concentration at equilibrium. ['S1'mean, 'S2'mean, ...., 'Sa'mean]
         concentrations = np.nanmean(
-            self.reaction_profile[initial_timestep:-1:1, :], axis=0
+            self.reaction_profile[initial_timestep:], axis=0
         )
         # take product of ([A]^a * [B]^b * ... etc) for each elementary reaction
-        logger.debug("concentrations: " + HANDY.np_repr(concentrations))
-        logger.debug("self.coefficient_array: " + HANDY.np_repr(self.coefficient_array))
+        logger.debug("                 concentrations at equilibrium: " + HANDY.np_repr(concentrations))
+        logger.debug("                 coefficient_array: " + HANDY.np_repr(self.coefficient_array))
         Keq = np.prod(
             np.power(concentrations, self.coefficient_array), axis=1
         )
         Keq = np.nan_to_num(Keq)
-        logger.debug(
-            "Experimental Keq " + HANDY.np_repr(Keq) + "\n"
-        )
+        logger.debug(f"                 Experimental Keq: {Keq}")
         self.experimental_Keq_array = Keq
         return Keq
 
