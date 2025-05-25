@@ -326,10 +326,12 @@ class experiment:
         )
         return True
 
-    # calculates an array of Keq's for each elementary reaction, BASED ON numerical approximation
-    # this method is designed to be used for 'solution/proposed' models, calculating Keq based on concentrations of reacting species
-    # the Keq can be determined by a ratio of concentrations of species when the reaction profile has reached a 'plateau'
-    def find_experimental_Keq_array(self):
+    def find_experimental_Keq_array(self) -> np.ndarray:
+        """
+        Calculates an array of Keq's for each elementary reaction, BASED ON numerical approximation.
+        This method is designed to be used for 'solution/proposed' models, calculating Keq based on concentrations of reacting species.
+        The Keq can be determined by a ratio of concentrations of species when the reaction profile has reached a 'plateau'.
+        """
         # select a point in the reaction profile which is approximately the begining of the 'plateau'
         initial_timestep = np.int16(
             self.reaction_profile.shape[0] * experiment.EXPERIMENTAL_KEQ_SAMPLING_RANGE
@@ -341,14 +343,15 @@ class experiment:
         # take product of ([A]^a * [B]^b * ... etc) for each elementary reaction
         logger.debug("concentrations: " + HANDY.np_repr(concentrations))
         logger.debug("self.coefficient_array: " + HANDY.np_repr(self.coefficient_array))
-        self.experimental_Keq_array = np.prod(
+        Keq = np.prod(
             np.power(concentrations, self.coefficient_array), axis=1
         )
-        self.experimental_Keq_array = np.nan_to_num(self.experimental_Keq_array)
+        Keq = np.nan_to_num(Keq)
         logger.debug(
-            "Experimental Keq " + HANDY.np_repr(self.experimental_Keq_array) + "\n"
+            "Experimental Keq " + HANDY.np_repr(Keq) + "\n"
         )
-        return True
+        self.experimental_Keq_array = Keq
+        return Keq
 
     # solves the coupled ode's, effectively 'runs' the experiment
     # remember the the goal here is to find the 'plateau' - i.e. when the change in the Keq since the last 'step' is below some threshold we consider the reaction as 'completed'
