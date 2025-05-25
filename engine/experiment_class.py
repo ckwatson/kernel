@@ -608,28 +608,27 @@ class experiment:
             experiment.RATE_CONSTANT_EXTRACTION_START_POINT,
             experiment.RATE_CONSTANT_EXTRACTION_END_POINT,
         )
-        logger.debug(f"               Concentrations over the selected period of time is in an array of shape {conc_x.shape}.")
+        logger.debug(f"               Concentrations over the selected period of time is in an array of shape {conc_x.shape}:"
+            + "\n                 " + HANDY.np_repr(conc_x).replace("\n", "\n                 "))
 
         # TODO: What is this doing????
-        # trim the first and last element off the concentration so it has the same length as the dSdt
+        # trim the first and last element off the concentration so it has the same length as the dS/dt matrix.
         slice_of_conc = np.resize(
             conc_x, (conc_x.shape[0] - 2, 1, self.number_of_species)
         )
 
         logger.info(
-            "               Conc shape after slicing: "
-            + str(slice_of_conc.shape)
-            + "\n               Conc vals "
-            + HANDY.np_repr(slice_of_conc)
-        )  # , file=sys.stderr)
+            f"               We reshaped it to {slice_of_conc.shape}:"
+            + "\n                 " + HANDY.np_repr(slice_of_conc).replace("\n", "\n                 ")
+        )
 
         # previous dSdt was a two dimensional tensor, now we make it a three dimensional tensor just 'pushing' the second dimension into the third, we do this so it is properly sized for calculations occuring below
         dSdt = np.resize(dSdt, (slice_of_conc.shape[0], 1, self.number_of_species))
 
-        logger.info("               Coef(f) shape: " + str(self.reactant_coefficient_array.shape)
-        	 +"\n               Coef(f) vals " + HANDY.np_repr(self.reactant_coefficient_array)
-        	 +"\n               Coef(b) shape" + str(self.product_coefficient_array.shape)
-        	 +"\n               Coef(b) vals " + HANDY.np_repr(self.product_coefficient_array))#, file=sys.stderr)
+        logger.info("               Reactant coefficients, Coef(f), is a " + str(self.reactant_coefficient_array.shape)+" array:"
+        	 +"\n                 " + HANDY.np_repr(self.reactant_coefficient_array).replace("\n", "\n                 ")
+        	 +"\n               Product coefficients, Coef(b), is a " + str(self.product_coefficient_array.shape)+" array:"
+        	 +"\n                 " + HANDY.np_repr(self.product_coefficient_array).replace("\n", "\n                 "))
 
         # we calculate the Keq based on experimental definition, concentration ratios on the 'plateau'
         self.find_experimental_Keq_array()
