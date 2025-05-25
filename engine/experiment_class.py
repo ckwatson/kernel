@@ -521,16 +521,22 @@ class experiment:
         else:
             return rxn_rate
 
-    def slice_reaction_profile(self, job_id: str, start: Optional[float] = None, end: Optional[float] = None):
+    def slice_array_by_time(self, job_id: str, array_to_slice: Optional[np.ndarray]=None, start: Optional[float] = None, end: Optional[float] = None,
+                            ):
         """
-        Returns the concentration of each species over the entire reaction profile, with an optional
-        parameter (slice) defining some range (a,b) in the time/first dimension.
-        If slice is given, then only the concentration values in that range are returned.
+        Returns a slice of `array_to_slice` based on the provided start and end times.
+        If `array_to_slice` is None, it defaults to the experiment's `reaction_profile`.
+        If `start` or `end` is None, the full array is returned.
+        Boundary checks are performed to ensure that the start and end times are within the range of the `time_array`.
         """
         logger = logging.getLogger(job_id).getChild("get_reaction_profile")
+        if array_to_slice is None:
+            # if no array_to_slice is provided, we use the reaction_profile
+            array_to_slice = self.reaction_profile
+            logger.info("               No array to slice provided, using the reaction profile.")
         if start is None or end is None:
             logger.info("               No slice input provided, returning the full reaction profile.")
-            return self.reaction_profile
+            return array_to_slice
         start_time = float(start)
         end_time = float(end)
         # Boundary checks for the start and end times.
@@ -563,7 +569,7 @@ class experiment:
                     f"{self.time_array[-1]:.2f}.")
         # creating the masking array to select the sliced versions of the reaction_profile.
         condition = (self.time_array >= start_time) & (self.time_array <= end_time)
-        return self.reaction_profile[condition, :]
+        return array_to_slice[condition, :]
 
     # the important thing to note here is that the time values in reaction_profile are floats and that they are not constrainted to have consistent delta_t, THEREFORE we need the specific time values associated with concentration values obtained from get_reaction_profile()
     # the slice parameter works exactly the same as the get_reaction_profiles slice parameter
@@ -601,7 +607,7 @@ class experiment:
         dSdt = dS / dt.reshape(-1, 1)
         logger.debug(f"               dS/dt is of shape {dSdt.shape}.")
         # get the concentration values and trim the dSdt to match the sample size
-        conc_x = self.slice_reaction_profile(
+        conc_x = self.slice_array_by_time(
             job_id,
             experiment.RATE_CONSTANT_EXTRACTION_START_POINT,
             experiment.RATE_CONSTANT_EXTRACTION_END_POINT,
