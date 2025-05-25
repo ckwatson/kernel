@@ -8,6 +8,7 @@ from typing import Tuple, Optional
 
 import numpy as np
 import numpy.ma as ma
+from tabulate import tabulate
 
 from kernel.data.reaction_mechanism_class import reaction_mechanism
 from . import handy_functions as HANDY
@@ -624,11 +625,22 @@ class experiment:
 
         # previous dSdt was a two dimensional tensor, now we make it a three dimensional tensor just 'pushing' the second dimension into the third, we do this so it is properly sized for calculations occuring below
         dSdt = np.resize(dSdt, (slice_of_conc.shape[0], 1, self.number_of_species))
-
+        table = tabulate(
+            self.reactant_coefficient_array,
+            headers=self.species_array,
+            floatfmt=".4g",
+            tablefmt="github",
+        )
         logger.info("               Reactant coefficients, Coef(f), is a " + str(self.reactant_coefficient_array.shape)+" array:"
-        	 +"\n                 " + HANDY.np_repr(self.reactant_coefficient_array).replace("\n", "\n                 ")
-        	 +"\n               Product coefficients, Coef(b), is a " + str(self.product_coefficient_array.shape)+" array:"
-        	 +"\n                 " + HANDY.np_repr(self.product_coefficient_array).replace("\n", "\n                 "))
+        	 +"\n                 " + str(table).replace("\n", "\n                 "))
+        table = tabulate(
+            self.product_coefficient_array,
+            headers=self.species_array,
+            floatfmt=".4g",
+            tablefmt="github",
+        )
+        logger.info("               Product coefficients, Coef(b), is a " + str(self.product_coefficient_array.shape)+" array:"
+        	 +"\n                 " + str(table).replace("\n", "\n                 "))
 
         # we calculate the Keq based on experimental definition, concentration ratios on the 'plateau'
         self.find_experimental_Keq_array()
