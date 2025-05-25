@@ -658,7 +658,8 @@ class experiment:
         # we calculate the Keq based on experimental definition, concentration ratios on the 'plateau'
         self.find_experimental_Keq_array()
         # reshape, and handling any NaN's
-        exKeq = self.experimental_Keq_array.reshape(1, -1).nan_to_num()
+        exKeq = self.experimental_Keq_array.reshape(1, -1)
+        exKeq = np.nan_to_num(exKeq)
 
         # calculate the Q value (Rate = f * Q)
         # this is why we reshaped our arrays
@@ -668,7 +669,8 @@ class experiment:
 
         # logger.info(exKeq.shape, Q.shape, self.number_of_reactions ,self.reactant_coefficient_array.shape, self.product_coefficient_array.shape)
         # reshape, and handling any NaN's
-        Q = Q.reshape(-1, self.number_of_reactions, 1).nan_to_num(Q)
+        Q = Q.reshape(-1, self.number_of_reactions, 1)
+        Q = np.nan_to_num(Q)
         logger.debug(f"               We reshaped `Q` to {Q.shape}.")
 
         # the next part is our matrix-based solution to determining rate constants.
