@@ -777,30 +777,30 @@ class experiment:
 
         return self.rate_constant_array
 
-    def remove_flat_region(self, threshold=0.000000000000001):
-        # logger.info('reaction_profile shape:',self.reaction_profile.shape)
-        reaction_profile_sampled = self.reaction_profile[
-                                   :: self.reaction_profile.shape[0] // 20
-                                   ]
-        # logger.info('reaction_profile_sampled shape:',reaction_profile_sampled.shape)
-        for i in range(1, reaction_profile_sampled.shape[0]):
-            this_line = reaction_profile_sampled[i]
-            prev_line = reaction_profile_sampled[i - 1]
-            if all(np.absolute(this_line - prev_line) < threshold):
-                break
-        logger.info(
-            "				Concentrations all approximately reach equilibrium at "
-            + str(i / reaction_profile_sampled.shape[0] * 100)
-            + "% of calculated length (time-step: "
-            + str(i)
-            + ")."
-        )
-        # time_array
-        self.time_array = self.time_array[: self.time_array.shape[0] // 500 * i]
-        self.reaction_profile = self.reaction_profile[
-                                : self.reaction_profile.shape[0] // 500 * i
-                                ]
+    def remove_flat_region(self, job_id: str, threshold: float =1e-15):
+        """
+        This method trims the reaction profile to remove the flat region at the end of the profile.
+        It identifies the point where the change in concentration between consecutive time steps is below a specified threshold.
+        The time array and reaction profile are then trimmed to this point.
+        """
+        logger = logging.getLogger(job_id).getChild("remove_flat_region")
+        logger.info("               Removing flat region from the reaction profile.")
+        # Sample the reaction profile at regular intervals
+        sampled_profile = self.reaction_profile[:: self.reaction_profile.shape[0] // 20]
 
+        # Find the first point where the change between consecutive lines is below the threshold
+        for i in range(1, len(sampled_profile)):
+           if np.all(np.abs(sampled_profile[i] - sampled_profile[i - 1]) < threshold):
+               break
+
+        # Log the percentage of the profile where equilibrium is reached
+        logger.info(
+           f"               Concentrations approximately reach equilibrium at {i / len(sampled_profile) * 100:.2f}% "
+           f"of the calculated length (time-step: {i})."
+        )
+        # Trim the time array and reaction profile up to the identified point
+        self.time_array = self.time_array[: self.time_array.shape[0] // 500 * i]
+        self.reaction_profile = self.reaction_profile[: self.reaction_profile.shape[0] // 500 * i]
 
 if __name__ == "__main__":
     logger.info("succesfully imported experiment_class")
