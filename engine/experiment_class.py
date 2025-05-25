@@ -571,27 +571,6 @@ class experiment:
         condition = (self.time_array >= start_time) & (self.time_array <= end_time)
         return array_to_slice[condition]
 
-    # the important thing to note here is that the time values in reaction_profile are floats and that they are not constrainted to have consistent delta_t, THEREFORE we need the specific time values associated with concentration values obtained from get_reaction_profile()
-    # the slice parameter works exactly the same as the get_reaction_profiles slice parameter
-    def get_time_array(self, slice=(None, None)):
-        # if slice input was provided we return a specific section of the time_array
-        if slice != (None, None):
-            # check that the slicing bounds are within range
-            assert np.all(
-                (self.time_array[0] <= slice) & (slice <= self.time_array[-1])
-            )
-            condition = np.logical_and(
-                np.greater_equal(self.time_array, slice[0]),
-                np.less_equal(self.time_array, slice[1]),
-            )
-            # get slice
-            sliced_time_array = np.compress(condition, self.time_array)
-            return sliced_time_array
-
-        # return the full time_array if no slice input was provided
-        return self.time_array
-
-    # method description
     def get_matrix_rate_solution(self, job_id: str):
         logger = logging.getLogger(job_id).getChild("get_matrix_rate_solution")
         # get the concentration values and trim the dSdt to match the sample size
