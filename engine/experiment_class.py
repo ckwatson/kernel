@@ -747,10 +747,12 @@ class experiment:
 
         return self.rate_constant_array
 
-    def remove_flat_region(self, job_id: str, threshold: float = 1e-15):
+    def find_flat_region(self, job_id: str, threshold: float = 1e-15, remove: bool=True) -> int:
         """
         The simulation may have run way longer than necessary, resulting in a flat region in the reaction profile.
         This makes the graph hard to read, so we want to remove the flat region at the end of the reaction profile.
+
+        @return cutoff: The number of time-steps to keep in the reaction profile after removing the flat region.
         """
         logger = logging.getLogger(job_id).getChild("remove_flat_region")
         # Sample 1% moments of the reaction profile (but no more than 100 and at least 10, unless we don't have
@@ -781,8 +783,10 @@ class experiment:
             f"               Concentrations approximately reach equilibrium at {i / len(sampled_profile) * 100:.2f}% "
             f"of the calculated length (time-step: {i}). Cutting off the reaction profile at {cutoff} time-steps."
         )
-        self.time_array = self.time_array[:cutoff]
-        self.reaction_profile = self.reaction_profile[:cutoff]
+        if remove:
+            self.time_array = self.time_array[:cutoff]
+            self.reaction_profile = self.reaction_profile[:cutoff]
+        return cutoff
 
 if __name__ == "__main__":
     logger.info("succesfully imported experiment_class")

@@ -34,7 +34,7 @@ def equilibrate(job_id: str, input_model: experiment_class.experiment, diag=Fals
     input_model.find_reaction_rate_function()
     input_model.find_reaction_profile(job_id, diagnostic_output=diag)
     input_model.find_experimental_Keq_array()
-    input_model.remove_flat_region(job_id=job_id)
+    input_model.find_flat_region(job_id=job_id, remove=True)
 
 
 def run_true_experiment(
@@ -284,7 +284,7 @@ def run_proposed_experiment(
         job_id=job_id,
         input_concentration=np.array(input_concentrations), diagnostic_output=diag
     )
-    proposed_model.remove_flat_region(job_id=job_id)
+    proposed_model.find_flat_region(job_id=job_id, remove=True)
     # TODO: ??? Missing a species????
     table = tabulate(
         [
