@@ -658,8 +658,7 @@ class experiment:
         # we calculate the Keq based on experimental definition, concentration ratios on the 'plateau'
         self.find_experimental_Keq_array()
         # reshape, and handling any NaN's
-        exKeq = np.reshape(self.experimental_Keq_array, (1, -1))
-        exKeq = np.nan_to_num(exKeq)
+        exKeq = self.experimental_Keq_array.reshape(1, -1).nan_to_num()
 
         # calculate the Q value (Rate = f * Q)
         # this is why we reshaped our arrays
