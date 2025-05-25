@@ -4,6 +4,8 @@
 """module for the class experiment"""
 
 import sys, logging
+from typing import Tuple, Optional
+
 import numpy as np
 import numpy.ma as ma
 from . import handy_functions as HANDY
@@ -24,6 +26,9 @@ from scipy.integrate import (
 logger = logging.getLogger(
     __name__
 )  # tell the program to send messages on its own behalf.
+
+# suppress extremely small numbers, numbers appear as zero if < 1E-12
+np.set_printoptions(suppress=True)
 
 
 # this object represents a rxn/experiment, a mixing of beakers, production of some reactants
@@ -46,7 +51,7 @@ class experiment:
     )
     STANDARD_TEMPERATURE = 298.15  # units are Kelvin (equivalent to 25 degrees Celsius)
     EXPERIMENTAL_KEQ_SAMPLING_RANGE = (
-        2 / 3
+            2 / 3
     )  # assume the reaction has reached equilibrium in the last third of the reaction
     EIGENVALUE_TOLERANCE = 1e-12  # mask values lower than the tolerance when calculating the rate constants
 
@@ -56,13 +61,13 @@ class experiment:
     RATE_CONSTANT_EXTRACTION_END_POINT = 12.0
 
     def __init__(
-        self,
-        input_reaction_mechanism,
-        input_temp,
-        input_time=None,
-        rxn_profile=None,
-        Keq_threshold=None,
-        mass_balance_threshold=None,
+            self,
+            input_reaction_mechanism,
+            input_temp,
+            input_time=None,
+            rxn_profile=None,
+            Keq_threshold=None,
+            mass_balance_threshold=None,
     ):
 
         # debugging,
@@ -448,10 +453,10 @@ class experiment:
 
                 # compare the last and the current Keq
                 if np.all(
-                    np.fabs(current_ln_Keq - previous_ln_Keq)
-                    < np.asarray(
-                        [self.Keq_threshold for x in range(self.number_of_reactions)]
-                    )
+                        np.fabs(current_ln_Keq - previous_ln_Keq)
+                        < np.asarray(
+                            [self.Keq_threshold for x in range(self.number_of_reactions)]
+                        )
                 ):
                     logger.info("" + str(int(start_time)) + " -- close enough!")
                     break
@@ -513,57 +518,47 @@ class experiment:
         else:
             return rxn_rate
 
-    # this function returns the concentration of each species over the entire reaction profile, with an optional parameter (slice) defining some range (a,b) in the time/first dimension, if slice is given then only the concentration values in that range are returned
-    def get_reaction_profile(self, slice=(None, None)):
-        # if slice input was provided we return a specific section of the reaction_profile
-        if slice != (None, None):
-            logger.info(
-                "             Slicing the "
-                + str(slice[0])
-                + "~"
-                + str(slice[1])
-                + " part from the time-array that has a length of "
-                + str(self.time_array[-1])
-                + " ."
-            )
-            # check that the slicing bounds are within range
-            # assert that both start-end are greater or equal to the first time value
-            # assert that start is less than or equal to the final time value
-            # assert that the end is less than the start
-            assert (
-                np.all(self.time_array[0] <= slice)
-                & (slice[0] <= self.time_array[-1])
-                & (slice[0] < slice[1])
-            )
-
-            # return the full reaction_profile if the slice was larger than the reaction_profile
-            if slice[1] >= self.time_array[-1]:
-                return self.reaction_profile
-            # creating the masking array to select the sliced verions of the reaction_profile
-            elif slice[1] < self.time_array[-1]:
-                condition = np.logical_and(
-                    np.greater_equal(self.time_array, slice[0]),
-                    np.less_equal(self.time_array, slice[1]),
-                )
-
-            # np.compress needs to be applied to each axis seperately to create the slice
-            sliced_reaction_profile = np.zeros(
-                (
-                    np.compress(condition, self.reaction_profile[:, 0]).shape[0],
-                    self.number_of_species,
-                )
-            )
-            for axis in range(self.number_of_species):
-
-                # logger.info(axis, sliced_reaction_profile.shape[0], sliced_reaction_profile.shape[1], self.reaction_profile.shape[0], self.reaction_profile.shape[1])
-                sliced_reaction_profile[:, axis] = np.compress(
-                    condition, self.reaction_profile[:, axis]
-                )
-
-            return sliced_reaction_profile
-
-        # return the full reaction_profile if no slice input was provided
-        return self.reaction_profile
+    def get_reaction_profile(self, job_id: str, start: Optional[float] = None, end: Optional[float] = None):
+        """
+        Returns the concentration of each species over the entire reaction profile, with an optional
+        parameter (slice) defining some range (a,b) in the time/first dimension.
+        If slice is given, then only the concentration values in that range are returned.
+        """
+        logger = logging.getLogger(job_id).getChild("get_reaction_profile")
+        if start is None or end is None:
+            logger.info("No slice input provided, returning the full reaction profile.")
+            return self.reaction_profile
+        start = float(start)
+        end = float(end)
+        # Boundary checks for the start and end times.
+        if end >= self.time_array[-1]:
+            logger.warning(
+                f"End time selected, {end}, is larger than the time-array. "
+                f"Slicing up to the last available time, {self.time_array[-1]}.")
+            end = self.time_array[-1]
+        if start >= self.time_array[-1]:
+            logger.warning(
+                f"Start time selected, {start}, is larger than the time-array. "
+                f"Slicing up to the last available time, {self.time_array[-1]}.")
+            start = self.time_array[-1]
+        if start < self.time_array[0]:
+            logger.warning(
+                f"Start time selected, {start}, is smaller than the first time value. "
+                f"Slicing from the first available time, {self.time_array[0]}.")
+            start = self.time_array[0]
+        if end < self.time_array[0]:
+            logger.warning(
+                f"End time selected, {end}, is smaller than the first time value. "
+                f"Slicing from the first available time, {self.time_array[0]}.")
+            end = self.time_array[0]
+        if start > end:
+            logger.warning(
+                f"Start time {start} should be earlier than end time {end}. Reversing the order.")
+            start, end = end, start
+        logger.info(f"Slicing the {start}~{end} part from the time-array with a length of {self.time_array[-1]}.")
+        # creating the masking array to select the sliced versions of the reaction_profile.
+        condition = (self.time_array >= start) & (self.time_array <= end)
+        return self.reaction_profile[condition, :]
 
     # the important thing to note here is that the time values in reaction_profile are floats and that they are not constrainted to have consistent delta_t, THEREFORE we need the specific time values associated with concentration values obtained from get_reaction_profile()
     # the slice parameter works exactly the same as the get_reaction_profiles slice parameter
@@ -586,27 +581,28 @@ class experiment:
         return self.time_array
 
     # method description
-    def get_matrix_rate_solution(self):
-        # calculate the change in concentration over time (dSdt)
-        # start from the second index, go to the end, increment by 1 (2::1)
-        # start from the first index, go to the second last, increment by 1 (:-2:1)
+    def get_matrix_rate_solution(self, job_id: str):
+        logger = logging.getLogger(job_id).getChild("get_matrix_rate_solution")
+        # Calculate the change in concentration over time (dSdt)
+        # Use (x2 - x1) / (t2 - t1) for each time step:
+        #   - For concentrations: start at index 2 to the end (2::1)
+        #   - For times: start at index 0 to the second-to-last (:-2:1)
         # the reason for these two indexing choices is because we are calcuating the dSdt using a simple (x2 - x1) / (t2 - t1)
-        dSdt = np.divide(
-            np.subtract(
-                self.reaction_profile[2::1, :], self.reaction_profile[:-2:1, :]
-            ),
-            np.subtract(self.time_array[2::1], self.time_array[:-2:1])[:, np.newaxis],
-        )  # the newaxis just aligns the time_array with the reaction_profile so they are the same shape for divide
-
-        # suppress extremely small numbers, numbers appear as zero if < 1E-12
-        np.set_printoptions(suppress=True)
+        x2 = self.reaction_profile[1:]
+        x1 = self.reaction_profile[:-1]
+        # Both x2 and x1 are 2D tensors of shape (n-1, m), where n is the number of time steps and m is the number of species.
+        dS = np.subtract(x2, x1)  # the change in concentration over time
+        # dt is the change in time, it is a 1D tensor of shape (n-1,).
+        dt = np.subtract(self.time_array[1:], self.time_array[:-1])
+        # `.reshape(-1, 1)` converts the row vector into a column vector. That is, from shape (n-1,) to (n-1, 1).
+        # Equivalently, you can use `[:, np.newaxis]`.
+        dSdt = dS / dt.reshape(-1, 1)
 
         # get the concentration values and trim the dSdt to match the sample size
         conc_x = self.get_reaction_profile(
-            (
-                experiment.RATE_CONSTANT_EXTRACTION_START_POINT,
-                experiment.RATE_CONSTANT_EXTRACTION_END_POINT,
-            )
+            job_id,
+            experiment.RATE_CONSTANT_EXTRACTION_START_POINT,
+            experiment.RATE_CONSTANT_EXTRACTION_END_POINT,
         )
 
         # logger.debug("Conc shape: " + str(conc_x.shape)
@@ -786,8 +782,8 @@ class experiment:
     def remove_flat_region(self, threshold=0.000000000000001):
         # logger.info('reaction_profile shape:',self.reaction_profile.shape)
         reaction_profile_sampled = self.reaction_profile[
-            :: self.reaction_profile.shape[0] // 20
-        ]
+                                   :: self.reaction_profile.shape[0] // 20
+                                   ]
         # logger.info('reaction_profile_sampled shape:',reaction_profile_sampled.shape)
         for i in range(1, reaction_profile_sampled.shape[0]):
             this_line = reaction_profile_sampled[i]
@@ -804,12 +800,11 @@ class experiment:
         # time_array
         self.time_array = self.time_array[: self.time_array.shape[0] // 500 * i]
         self.reaction_profile = self.reaction_profile[
-            : self.reaction_profile.shape[0] // 500 * i
-        ]
+                                : self.reaction_profile.shape[0] // 500 * i
+                                ]
 
 
 if __name__ == "__main__":
     logger.info("succesfully imported experiment_class")
-
 
 # pass

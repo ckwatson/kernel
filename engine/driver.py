@@ -231,7 +231,7 @@ def run_proposed_experiment(
 
     try:
         # try to find the rate constants
-        rate_constants = proposed_model.get_matrix_rate_solution()
+        rate_constants = proposed_model.get_matrix_rate_solution(job_id = job_id)
         logger.debug("Rate Constants: %s", rate_constants)
     # try to handle bad rate constants
     except HANDY.NegativeCoefficientException as u_error:
