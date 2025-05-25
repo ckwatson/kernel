@@ -518,7 +518,7 @@ class experiment:
         else:
             return rxn_rate
 
-    def get_reaction_profile(self, job_id: str, start: Optional[float] = None, end: Optional[float] = None):
+    def slice_reaction_profile(self, job_id: str, start: Optional[float] = None, end: Optional[float] = None):
         """
         Returns the concentration of each species over the entire reaction profile, with an optional
         parameter (slice) defining some range (a,b) in the time/first dimension.
@@ -599,15 +599,12 @@ class experiment:
         dSdt = dS / dt.reshape(-1, 1)
 
         # get the concentration values and trim the dSdt to match the sample size
-        conc_x = self.get_reaction_profile(
+        conc_x = self.slice_reaction_profile(
             job_id,
             experiment.RATE_CONSTANT_EXTRACTION_START_POINT,
             experiment.RATE_CONSTANT_EXTRACTION_END_POINT,
         )
-
-        # logger.debug("Conc shape: " + str(conc_x.shape)
-        # 	 +"\nConc vals " + HANDY.np_repr(conc_x))#, file=sys.stderr)
-
+        logger.debug(f"Concentrations over the selected period of time is in an array of shape {conc_x.shape}.")
         # trim the first and last element off the concentration so it has the same length as the dSdt
         slice_of_conc = np.resize(
             conc_x, (conc_x.shape[0] - 2, 1, self.number_of_species)
