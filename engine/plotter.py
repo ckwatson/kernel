@@ -7,6 +7,8 @@
 import os
 import io
 import logging  # , mpld3
+from typing import Dict
+
 import numpy as np
 from matplotlib.pyplot import figure, close
 from matplotlib import rc
@@ -63,38 +65,43 @@ def fake_writer(plot):
     return '<svg viewBox="0 0 2520 1584">' + data.decode("utf-8")[367:]
 
 
-def sub_plots(plottingDict, true_data=None, user_data=None):
+def sub_plots(job_id: str,plottingDict: Dict[str, int], true_data=None, user_data=None):
+    """
+    @param plottingDict: from species names to their locations in the data array.
+    """
+    logger = logging.getLogger(job_id).getChild("sub_plots")
     number_of_plots = len(plottingDict)
-    # need to replace with logging
-    logger.info(
-        "        (a) entered Plotter.sub_plots.\n        Attempting to plot "
-        + str(number_of_plots)
-        + " concentration profiles."
-    )
-    # create the figure and determine the 'layout' of the subplots
+    logger.info("        (a) entered Plotter.sub_plots.")
+    # create the figure and determine the 'layout' of the subplots.
     profiles = figure(
         figsize=(35, 22), dpi=80, facecolor="w", edgecolor="k", tight_layout=True
-    )  # figsize = (width, heigh)
+    )
     combined = figure(
         figsize=(35, 22), dpi=80, facecolor="w", edgecolor="k", tight_layout=True
-    )  # figsize = (width, heigh)
+    )
+    # Arrange the subplots in a square grid. Figure out how many rows and columns we need.
     dimensions = int(np.ceil(np.sqrt(number_of_plots)))
-    # need to replace with logging
-    logger.info("        (b) draw the plots:")
+    logger.info(f"        (b) Attempting to arrange {number_of_plots} plots over a {dimensions}x{dimensions} square grid:")
     rc("font", size=22)
     sub_combined = combined.add_subplot(
-        111, title="Combined True Profile", xlabel="time", ylabel="Concentration"
+        1,1,1, title="Combined True Profile", xlabel="time", ylabel="Concentration"
     )
     if user_data is not None:
-        logger.info("            Aligning shapes of userDataSet and trueDataSet.")
+        logger.info(f"            Aligning shapes of userDataSet ({user_data.shape}) and trueDataSet ({true_data.shape}).")
         # if the trueDataSet is shorter, extend it to match the length of the userDataSet
         if true_data.shape[1] < user_data.shape[1]:
             length_difference = user_data.shape[1] - true_data.shape[1]
+            logger.info(
+                f"            The trueDataSet is shorter than the userDataSet, so we will extend it (by {length_difference} time steps) to match the length of the userDataSet."
+            )
+            final_concentrations = true_data[:, -1].reshape(-1, 1)
+            patch = np.repeat(final_concentrations, length_difference, axis=1)
             true_data = np.append(
                 true_data,
-                np.repeat(true_data[:, -1].reshape((6, 1)), length_difference, axis=1),
+                patch,
                 axis=1,
             )
+            logger.info(f"            The trueDataSet is now {true_data.shape}.")
         elif true_data.shape[1] > user_data.shape[1]:
             # if the trueDataSet is longer, truncate it to match the length of the userDataSet
             true_data = true_data[:, : user_data.shape[1]]
@@ -117,12 +124,12 @@ def sub_plots(plottingDict, true_data=None, user_data=None):
     )
     logger.info("            Drawing curves for:")
     # now for every species to be plotted:
-    for plot_info, (name, location) in enumerate(plottingDict.items(), start=1):
-        logger.info(name)
+    for subplot_id, (name, location) in enumerate(plottingDict.items(), start=1):
+        logger.info(f"              {name}")
         sub_individual = profiles.add_subplot(
             dimensions,
             dimensions,
-            plot_info,
+            subplot_id,
             title="Concentration Profile of " + name,
             xlabel="time",
             ylabel="[" + name + "]",
@@ -143,7 +150,7 @@ def sub_plots(plottingDict, true_data=None, user_data=None):
             sub_combined.plot(
                 data_x_true,
                 data_y_this,
-                colour[plot_info + 2],
+                colour[subplot_id + 2],
                 label="True " + "[" + name + "]",
                 linestyle="-",
             )
@@ -164,7 +171,7 @@ def sub_plots(plottingDict, true_data=None, user_data=None):
                 sub_combined.plot(
                     data_x_user,
                     data_y_this,
-                    colour[plot_info + 2],
+                    colour[subplot_id + 2],
                     label="User " + "[" + name + "]",
                     linestyle="--",
                 )
