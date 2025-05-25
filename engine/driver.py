@@ -28,7 +28,7 @@ graph = os.path.join("Graphs" + os.sep)
 # this function executes the necessary mathematical operations to find the Keq array - i.e. equilibrates the reaction
 
 
-def equilibrate(input_model: experiment_class.experiment, diag=False):
+def equilibrate(job_id: str, input_model: experiment_class.experiment, diag=False):
     # the meat and potatoes
     input_model.find_rate_constant()
     input_model.find_reaction_rate_function()
@@ -73,7 +73,7 @@ def run_true_experiment(
     logger.info(
         "            Now we can finally let the actual reaction happen -- let's pour everything into the beaker:"
     )
-    equilibrate(true_model, diag=diag)  # the magical math happens
+    equilibrate(job_id, true_model, diag=diag)  # the magical math happens
 
     table = tabulate(
         [
@@ -173,7 +173,7 @@ def preequilibrate_reagent(
         # actually preform the mathematical calculations
         # (diagnostics) diag is an optional argument that if true prints all the output from the integrator inside the experiment object
         # this is a lotttt of extra output
-        equilibrate(pre_equil_model, diag=diag)
+        equilibrate(job_id, pre_equil_model, diag=diag)
         final_concentrations = pre_equil_model.reaction_profile[-1]
 
         table = tabulate(
