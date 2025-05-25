@@ -257,7 +257,7 @@ def run_proposed_experiment(
                 proposed_model.remove_rxn(bad_rxn[0])
 
                 # try to find the rate constants again
-                rate_constants = proposed_model.get_matrix_rate_solution()
+                rate_constants = proposed_model.get_matrix_rate_solution(job_id= job_id)
 
             # if we fail again then crash
             except HANDY.NegativeCoefficientException:
