@@ -592,13 +592,10 @@ class experiment:
         # Use (x2 - x1) / (t2 - t1) for each time step:
         #   - For concentrations: start at index 2 to the end (2::1)
         #   - For times: start at index 0 to the second-to-last (:-2:1)
-        # the reason for these two indexing choices is because we are calcuating the dSdt using a simple (x2 - x1) / (t2 - t1)
-        x2 = self.reaction_profile[1:]
-        x1 = self.reaction_profile[:-1]
-        # Both x2 and x1 are 2D tensors of shape (n-1, m), where n is the number of time steps and m is the number of species.
-        dS = np.subtract(x2, x1)  # the change in concentration over time
+        # dS is the change in concentration, it is a 2D tensor of shape (n-1, number_of_species).
+        dS = np.diff(self.reaction_profile, axis=0)
         # dt is the change in time, it is a 1D tensor of shape (n-1,).
-        dt = np.subtract(self.time_array[1:], self.time_array[:-1])
+        dt = np.diff(self.time_array)
         # `.reshape(-1, 1)` converts the row vector into a column vector. That is, from shape (n-1,) to (n-1, 1).
         # Equivalently, you can use `[:, np.newaxis]`.
         dSdt = dS / dt.reshape(-1, 1)
