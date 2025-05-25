@@ -8,6 +8,8 @@ from typing import Tuple, Optional
 
 import numpy as np
 import numpy.ma as ma
+
+from kernel.data.reaction_mechanism_class import reaction_mechanism
 from . import handy_functions as HANDY
 
 # data file classes
@@ -62,12 +64,12 @@ class experiment:
 
     def __init__(
             self,
-            input_reaction_mechanism,
-            input_temp,
-            input_time=None,
-            rxn_profile=None,
-            Keq_threshold=None,
-            mass_balance_threshold=None,
+            input_reaction_mechanism: reaction_mechanism,
+            input_temp: float,
+            input_time: Optional[np.ndarray] = None,
+            rxn_profile: Optional[np.ndarray] = None,
+            Keq_threshold: Optional[float] = None,
+            mass_balance_threshold: Optional[float] = None,
     ):
 
         # debugging,
@@ -109,9 +111,9 @@ class experiment:
         self.temp = float(input_temp + experiment.TEMPERATURE_CONVERSION_FACTOR)
         self.RT = R * np.asfarray(input_temp + experiment.TEMPERATURE_CONVERSION_FACTOR)
         self.scaling_factor = experiment.SCALING_FACTOR
-        self.Keq_threshold = Keq_threshold if (Keq_threshold != None) else pow(10, -7)
+        self.Keq_threshold = Keq_threshold if (Keq_threshold is not None) else pow(10, -7)
         self.mass_balance_threshold = (
-            mass_balance_threshold if (mass_balance_threshold != None) else pow(10, -7)
+            mass_balance_threshold if (mass_balance_threshold is not None) else pow(10, -7)
         )
 
         # the Es, Ea, Er, Ep matrices
