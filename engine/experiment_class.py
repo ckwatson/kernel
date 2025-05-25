@@ -609,18 +609,16 @@ class experiment:
         logger.debug(f"               Concentrations over the selected period of time is in an array of shape {conc_x.shape}:"
             + "\n                 " + HANDY.np_repr(conc_x).replace("\n", "\n                 "))
 
-        # TODO: What is this doing????
-        # trim the first and last element off the concentration so it has the same length as the dS/dt matrix.
-        slice_of_conc = np.resize(
-            conc_x, (conc_x.shape[0] - 2, 1, self.number_of_species)
-        )
-
+        # Trim the first and last elements off the concentration array to match the length of the dS/dt matrix.
+        conc_x = conc_x[1:-1]
+        # Reshape the concentration array to be a 3D tensor, where the first dimension is the number of time points, the second dimension is 1 (to allow for broadcasting), and the third dimension is the number of species.
+        slice_of_conc = conc_x.reshape(-1, 1, self.number_of_species)
         logger.info(
             f"               We reshaped it to {slice_of_conc.shape}:"
             + "\n                 " + HANDY.np_repr(slice_of_conc).replace("\n", "\n                 ")
         )
 
-        # previous dSdt was a two dimensional tensor, now we make it a three dimensional tensor just 'pushing' the second dimension into the third, we do this so it is properly sized for calculations occuring below
+        # Do the same to dSdt, so that it is a 3D tensor with the same shape as `slice_of_conc`.
         dSdt = np.resize(dSdt, (slice_of_conc.shape[0], 1, self.number_of_species))
         table = tabulate(
             self.reactant_coefficient_array,
