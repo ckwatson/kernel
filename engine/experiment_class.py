@@ -569,7 +569,7 @@ class experiment:
                     f"{self.time_array[-1]:.2f}.")
         # creating the masking array to select the sliced versions of the reaction_profile.
         condition = (self.time_array >= start_time) & (self.time_array <= end_time)
-        return array_to_slice[condition, :]
+        return array_to_slice[condition]
 
     # the important thing to note here is that the time values in reaction_profile are floats and that they are not constrainted to have consistent delta_t, THEREFORE we need the specific time values associated with concentration values obtained from get_reaction_profile()
     # the slice parameter works exactly the same as the get_reaction_profiles slice parameter
@@ -594,39 +594,50 @@ class experiment:
     # method description
     def get_matrix_rate_solution(self, job_id: str):
         logger = logging.getLogger(job_id).getChild("get_matrix_rate_solution")
-        # Calculate the change in concentration over time (dSdt)
-        # Use (x2 - x1) / (t2 - t1) for each time step:
-        #   - For concentrations: start at index 2 to the end (2::1)
-        #   - For times: start at index 0 to the second-to-last (:-2:1)
-        # dS is the change in concentration, it is a 2D tensor of shape (n-1, number_of_species).
-        dS = np.diff(self.reaction_profile, axis=0)
-        # dt is the change in time, it is a 1D tensor of shape (n-1,).
-        dt = np.diff(self.time_array)
-        # `.reshape(-1, 1)` converts the row vector into a column vector. That is, from shape (n-1,) to (n-1, 1).
-        # Equivalently, you can use `[:, np.newaxis]`.
-        dSdt = dS / dt.reshape(-1, 1)
-        logger.debug(f"               dS/dt is of shape {dSdt.shape}.")
         # get the concentration values and trim the dSdt to match the sample size
-        conc_x = self.slice_array_by_time(
+        slice_of_concentrations = self.slice_array_by_time(
             job_id=job_id,
             array_to_slice=self.reaction_profile,
             start=experiment.RATE_CONSTANT_EXTRACTION_START_POINT,
             end=experiment.RATE_CONSTANT_EXTRACTION_END_POINT,
         )
-        logger.debug(f"               Concentrations over the selected period of time is in an array of shape {conc_x.shape}:"
-            + "\n                 " + HANDY.np_repr(conc_x).replace("\n", "\n                 "))
-
-        # Trim the first and last elements off the concentration array to match the length of the dS/dt matrix.
-        conc_x = conc_x[1:-1]
-        # Reshape the concentration array to be a 3D tensor, where the first dimension is the number of time points, the second dimension is 1 (to allow for broadcasting), and the third dimension is the number of species.
-        slice_of_conc = conc_x.reshape(-1, 1, self.number_of_species)
-        logger.info(
-            f"               We reshaped it to {slice_of_conc.shape}:"
-            + "\n                 " + HANDY.np_repr(slice_of_conc).replace("\n", "\n                 ")
+        logger.debug(f"               Concentrations over the selected period of time is in an array of shape {slice_of_concentrations.shape}"
+            # + ":\n                 " + HANDY.np_repr(slice_of_concentrations).replace("\n", "\n                 ")
         )
 
-        # Do the same to dSdt, so that it is a 3D tensor with the same shape as `slice_of_conc`.
-        dSdt = np.resize(dSdt, (slice_of_conc.shape[0], 1, self.number_of_species))
+        slice_of_time = self.slice_array_by_time(
+            job_id=job_id,
+            array_to_slice=self.time_array,
+            start=experiment.RATE_CONSTANT_EXTRACTION_START_POINT,
+            end=experiment.RATE_CONSTANT_EXTRACTION_END_POINT,
+        )
+
+        # Calculate the change in concentration over time (dSdt)
+        # dS is the change in concentration, it is a 2D tensor of shape (n-1, number_of_species).
+        dS = np.diff(slice_of_concentrations, axis=0)
+        # dt is the change in time, it is a 1D tensor of shape (n-1,).
+        dt = np.diff(slice_of_time)
+        # `.reshape(-1, 1)` converts the row vector into a column vector. That is, from shape (n-1,) to (n-1, 1).
+        # Equivalently, you can use `[:, np.newaxis]`.
+        dSdt = dS / dt.reshape(-1, 1)
+
+        # Trim the first elements off the concentration matrix to match the length of the dS/dt matrix.
+        slice_of_concentrations = slice_of_concentrations[1:]
+        # Reshape the concentration array to be a 3D tensor, where the first dimension is the number of time points, the second dimension is 1 (to allow for broadcasting), and the third dimension is the number of species.
+        slice_of_concentrations = slice_of_concentrations.reshape(-1, 1, self.number_of_species)
+        logger.debug(
+            f"               We reshaped `slice_of_concentrations` to {slice_of_concentrations.shape}"
+            # + ":\n                 " + HANDY.np_repr(slice_of_concentrations).replace("\n", "\n                 ")
+        )
+
+        # Do the same to dSdt, so that it is a 3D tensor with the same shape as `slice_of_concentrations`.
+        logger.debug(f"               dS/dt is of shape {dSdt.shape}.")
+        dSdt = dSdt.reshape(-1, 1, self.number_of_species)
+        logger.debug(
+            f"               We reshaped `dS/dt` to {dSdt.shape}"
+            # + ":\n                 " + HANDY.np_repr(dSdt).replace("\n", "\n                 ")
+        )
+
         table = tabulate(
             self.reactant_coefficient_array,
             headers=self.species_array,
@@ -653,10 +664,10 @@ class experiment:
         # calculate the Q value (Rate = f * Q)
         # this is why we reshaped our arrays
         Q = np.subtract(
-            np.prod(np.power(slice_of_conc, self.reactant_coefficient_array), axis=2),
+            np.prod(np.power(slice_of_concentrations, self.reactant_coefficient_array), axis=2),
             np.divide(
                 np.prod(
-                    np.power(slice_of_conc, self.product_coefficient_array), axis=2
+                    np.power(slice_of_concentrations, self.product_coefficient_array), axis=2
                 ),
                 exKeq[:],
             ),
