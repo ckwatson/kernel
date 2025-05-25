@@ -32,7 +32,7 @@ def equilibrate(job_id: str, input_model: experiment_class.experiment, diag=Fals
     # the meat and potatoes
     input_model.find_rate_constant()
     input_model.find_reaction_rate_function()
-    input_model.find_reaction_profile(diagnostic_output=diag)
+    input_model.find_reaction_profile(job_id, diagnostic_output=diag)
     input_model.find_experimental_Keq_array()
     input_model.remove_flat_region(job_id=job_id)
 
@@ -281,6 +281,7 @@ def run_proposed_experiment(
         condition.molecule_concentrations[name] for name in sorted_species_names
     ]
     proposed_model.find_reaction_profile(
+        job_id=job_id,
         input_concentration=np.array(input_concentrations), diagnostic_output=diag
     )
     proposed_model.remove_flat_region(job_id=job_id)

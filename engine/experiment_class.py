@@ -326,12 +326,13 @@ class experiment:
         )
         return True
 
-    def find_experimental_Keq_array(self) -> np.ndarray:
+    def find_experimental_Keq_array(self, job_id: str="unknown job") -> np.ndarray:
         """
         Calculates an array of Keq's for each elementary reaction, BASED ON numerical approximation.
         This method is designed to be used for 'solution/proposed' models, calculating Keq based on concentrations of reacting species.
         The Keq can be determined by a ratio of concentrations of species when the reaction profile has reached a 'plateau'.
         """
+        logger = logging.getLogger(job_id).getChild("find_experimental_Keq_array")
         # select a point in the reaction profile which is approximately the begining of the 'plateau'
         initial_timestep = np.int16(
             self.reaction_profile.shape[0] * experiment.EXPERIMENTAL_KEQ_SAMPLING_RANGE
@@ -353,12 +354,14 @@ class experiment:
         self.experimental_Keq_array = Keq
         return Keq
 
-    # solves the coupled ode's, effectively 'runs' the experiment
-    # remember the the goal here is to find the 'plateau' - i.e. when the change in the Keq since the last 'step' is below some threshold we consider the reaction as 'completed'
-    # input_concentration allows us to optionally replace the reaction_profile currently stored in the experiment object
-    # diagnostic_output is a boolean parameter that, by default, supresses the large amount of possible output from the ode solver
-    def find_reaction_profile(self, input_concentration=None, diagnostic_output=False):
-
+    def find_reaction_profile(self, job_id:str="unknown job", input_concentration=None, diagnostic_output=False):
+        """
+        Solves the coupled ode's, effectively 'runs' the experiment
+        Remember that the goal here is to find the 'plateau' - i.e. when the change in the Keq since the last 'step' is below some threshold we consider the reaction as 'completed'
+        input_concentration allows us to optionally replace the reaction_profile currently stored in the experiment object
+        diagnostic_output is a boolean parameter that, by default, supresses the large amount of possible output from the ode solver
+        """
+        logger = logging.getLogger(job_id).getChild("find_reaction_profile")
         # the 'calculation' step
         def condition_elementary(conc, time):
             # [a,b,c,d,e](powered 'down') = they're pushed down [x,0,0,0,0] the x locations of a 2D array
@@ -454,7 +457,7 @@ class experiment:
                 # 	)
 
                 # calculate the Keq array and take the log
-                self.find_experimental_Keq_array()
+                self.find_experimental_Keq_array(job_id)
                 current_ln_Keq = np.log(self.experimental_Keq_array)
 
                 # compare the last and the current Keq
@@ -481,7 +484,7 @@ class experiment:
                 # logger.info(str("") + HANDY.np_repr(self.time_slicee) + "\n" + HANDY.np_repr(ode_solution))
 
                 # calculate the Keq array and take the log
-                self.find_experimental_Keq_array()
+                self.find_experimental_Keq_array(job_id)
                 previous_ln_Keq = np.log(self.experimental_Keq_array)
 
             # the initial concentrations for the next 'step'
@@ -574,7 +577,7 @@ class experiment:
         condition = (self.time_array >= start_time) & (self.time_array <= end_time)
         return array_to_slice[condition]
 
-    def get_matrix_rate_solution(self, job_id: str):
+    def get_matrix_rate_solution(self, job_id: str="unknown job"):
         logger = logging.getLogger(job_id).getChild("get_matrix_rate_solution")
         # get the concentration values and trim the dSdt to match the sample size
         slice_of_concentrations = self.slice_array_by_time(
@@ -638,7 +641,7 @@ class experiment:
                     f" array:\n                 " + str(table).replace("\n", "\n                 "))
 
         # we calculate the Keq based on experimental definition, concentration ratios on the 'plateau'
-        self.find_experimental_Keq_array()
+        self.find_experimental_Keq_array(job_id)
         # reshape, and handling any NaN's
         exKeq = self.experimental_Keq_array.reshape(1, -1)
         exKeq = np.nan_to_num(exKeq)
