@@ -678,14 +678,8 @@ class experiment:
         # TODO: I still need to implement the zero vector isolation removal function.
         # read the documentation here to explain what A,M,inverse M and so forth are doing.
 
-        # create our A matrix
-        A = np.multiply(
-            np.reshape(
-                self.coefficient_array,
-                (1, self.number_of_reactions, self.number_of_species),
-            ),
-            Q,
-        )
+        # Create the A matrix by broadcasting the coefficient array and multiplying with Q.
+        A = self.coefficient_array[None, :, :] * Q
         logger.info(f"               A is a {A.shape} array, "
                     f"corresponding to (num_time_points, num_reactions, num_species).")
 
