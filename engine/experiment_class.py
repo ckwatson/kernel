@@ -684,15 +684,8 @@ class experiment:
                     f"corresponding to (num_time_points, num_reactions, num_species).")
 
         # construct the M matrix
-        M = np.matrix(
-            np.zeros((self.number_of_reactions, self.number_of_reactions)), dtype=float
-        )
-        for a in range(self.number_of_reactions):
-            for b in range(self.number_of_reactions):
-                M[a, b] = np.sum(A[:, a, :] * A[:, b, :])
-                # M[a,b] = np.sum(np.sum((A[:,a,:] * A[:,b,:]), axis = 1), axis = 0)
-            # for b
-        # for a
+        M = np.einsum('iaj,ibj->ab', A, A)
+        logger.info(f"               M is a {M.shape} array.")
 
         # construct the X matrix
         X = np.matrix(np.zeros((self.number_of_reactions, 1)), dtype=float)
