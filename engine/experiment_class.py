@@ -626,16 +626,16 @@ class experiment:
             floatfmt=".4g",
             tablefmt="github",
         )
-        logger.info("               Reactant coefficients, Coef(f), is a " + str(self.reactant_coefficient_array.shape)+" array:"
-        	 +"\n                 " + str(table).replace("\n", "\n                 "))
+        logger.info(f"               Reactant coefficients, Coef(f), is a {self.reactant_coefficient_array.shape}"
+                    f" array:\n                 " + str(table).replace("\n", "\n                 "))
         table = tabulate(
             self.product_coefficient_array,
             headers=self.species_array,
             floatfmt=".4g",
             tablefmt="github",
         )
-        logger.info("               Product coefficients, Coef(b), is a " + str(self.product_coefficient_array.shape)+" array:"
-        	 +"\n                 " + str(table).replace("\n", "\n                 "))
+        logger.info(f"               Product coefficients, Coef(b), is a {self.product_coefficient_array.shape}"
+                    f" array:\n                 " + str(table).replace("\n", "\n                 "))
 
         # we calculate the Keq based on experimental definition, concentration ratios on the 'plateau'
         self.find_experimental_Keq_array()
