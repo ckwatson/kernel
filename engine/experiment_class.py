@@ -783,18 +783,23 @@ class experiment:
         This makes the graph hard to read, so we want to remove the flat region at the end of the reaction profile.
         """
         logger = logging.getLogger(job_id).getChild("remove_flat_region")
-        # Sample 1% moments of the reaction profile (but at least 5 and no more than 50) to find the flat region.
+        # Sample 1% moments of the reaction profile (but no more than 100 and at least 10, unless we don't have
+        # that many time steps, in each case we use all time steps) to find the flat region.
         N = self.time_array.shape[0]
-        num_samples = min(50, max(5, N // 100))
-        stride = N // num_samples
+        num_samples = min(N, 100, max(10, N // 100))
+        stride = min(1, N // num_samples)
         logger.info(f"               Sampling the reaction profile every {stride} time-steps to find the flat region."
                     f" That's {num_samples} points sampled.")
         sampled_profile = self.reaction_profile[::stride]
 
+        has_flat_region = False
         for i in range(1, len(sampled_profile)):
             if np.all(np.abs(sampled_profile[i] - sampled_profile[i - 1]) < threshold):
+                has_flat_region = True
                 break
-
+        if not has_flat_region:
+            logger.info("               No flat region found in the reaction profile.")
+            return
         cutoff = stride * i
         logger.info(
             f"               Concentrations approximately reach equilibrium at {i / len(sampled_profile) * 100:.2f}% "
