@@ -112,15 +112,9 @@ def sub_plots(job_id: str,plottingDict: Dict[str, int], true_data=None, user_dat
     true_data_sampled = sampler(true_data)
     data_x_true = true_data_sampled[0, :]
     logger.info(
-        "            Lossy-compressing true_data by selecting only "
-        + str(newSize)
-        + " items, which means a span of every "
-        + str(true_data.shape[1] / newSize)
-        + " items.\n            The true_data is compressed from "
-        + str(true_data.shape)
-        + " to "
-        + str(true_data_sampled.shape)
-        + "."
+        f"            Lossy-compressing true_data by selecting only {newSize} items, "
+        f"which means a span of every {true_data.shape[1] / newSize} items.\n"
+        f"            The true_data is compressed from {true_data.shape} to {true_data_sampled.shape}."
     )
     logger.info("            Drawing curves for:")
     # now for every species to be plotted:
