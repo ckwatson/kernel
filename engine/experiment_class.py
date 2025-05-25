@@ -662,22 +662,14 @@ class experiment:
 
         # calculate the Q value (Rate = f * Q)
         # this is why we reshaped our arrays
-        Q = np.subtract(
-            np.prod(np.power(slice_of_concentrations, self.reactant_coefficient_array), axis=2),
-            np.divide(
-                np.prod(
-                    np.power(slice_of_concentrations, self.product_coefficient_array), axis=2
-                ),
-                exKeq[:],
-            ),
-        )
+        Q = np.prod(np.power(slice_of_concentrations, self.reactant_coefficient_array), axis=2) - \
+                np.prod(np.power(slice_of_concentrations, self.product_coefficient_array), axis=2) / exKeq
+        logger.debug(f"               `Q` is a {Q.shape} array.")
 
         # logger.info(exKeq.shape, Q.shape, self.number_of_reactions ,self.reactant_coefficient_array.shape, self.product_coefficient_array.shape)
         # reshape, and handling any NaN's
-        Q = np.reshape(Q, (-1, self.number_of_reactions, 1))
-        Q = np.nan_to_num(Q)
-
-        logger.info(f"               Q is a {Q.shape} array.")
+        Q = Q.reshape(-1, self.number_of_reactions, 1).nan_to_num(Q)
+        logger.debug(f"               We reshaped `Q` to {Q.shape}.")
 
         # the next part is our matrix-based solution to determining rate constants.
         # The problem is that we don't have a handle on the unique solutions yet.
