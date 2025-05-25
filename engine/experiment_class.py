@@ -665,10 +665,12 @@ class experiment:
         Q = np.reshape(Q, (-1, self.number_of_reactions, 1))
         Q = np.nan_to_num(Q)
 
-        logger.info("Q.shape: " + str(Q.shape))
+        logger.info(f"               Q is a {Q.shape} array.")
 
-        # the next part is our matrix based solution to determining rate constants, the problem is that we don't have a handle on the unqiue solutions yet, i still need to implment the zero vector isolation removal function
-        # read the documentation here to explain what A,M,inverse M and so forth are doing
+        # the next part is our matrix-based solution to determining rate constants.
+        # The problem is that we don't have a handle on the unique solutions yet.
+        # TODO: I still need to implement the zero vector isolation removal function.
+        # read the documentation here to explain what A,M,inverse M and so forth are doing.
 
         # create our A matrix
         A = np.multiply(
@@ -678,7 +680,8 @@ class experiment:
             ),
             Q,
         )
-        logger.info("A.shape: " + str(A.shape))
+        logger.info(f"               A is a {A.shape} array, "
+                    f"corresponding to (num_time_points, num_reactions, num_species).")
 
         # construct the M matrix
         M = np.matrix(
@@ -765,26 +768,14 @@ class experiment:
         # print out the forward rate constants
         f_guess = np.asfarray(M_inverse * X)
         b_guess = f_guess / self.experimental_Keq_array[:, np.newaxis]
-        self.reactant_rate_constants = np.nan_to_num(
-            np.array([f_guess[i][0] for i in range(len(f_guess))])
-        )
-        self.product_rate_constants = np.nan_to_num(
-            np.array([b_guess[i][0] for i in range(len(b_guess))])
-        )
+        self.reactant_rate_constants = np.nan_to_num(f_guess.flatten())
+        self.product_rate_constants = np.nan_to_num(b_guess.flatten())
 
         logger.info(
-            "			reaction: "
-            + str(self.reactant_rate_constants)
-            + "\n			product: "
-            + str(self.product_rate_constants)
+            f"			reactant rate constants: {self.reactant_rate_constants}\n"
+            f"           product rate constants: {self.product_rate_constants}"
         )
-
         self.rate_constant_array = np.concatenate((f_guess, b_guess), axis=1)
-
-        logger.info(
-            "			Estimated Reaction Rate Constants: \n" + str(self.rate_constant_array)
-        )
-
         # now we check for negative rate constants
         check = np.all(np.less(self.rate_constant_array, 0.0), axis=1)
         if np.any(check):
