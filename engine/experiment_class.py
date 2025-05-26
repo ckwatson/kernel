@@ -143,9 +143,7 @@ class experiment:
         # the species concentration values at each time point, and the initial conc values
         # np.zeros(self.time_array.size[0], number_of_species)
         self.reaction_profile = (
-            np.array([[0.0 for iterator in self.species_array]])
-            if rxn_profile is None
-            else rxn_profile
+            np.zeros((1, len(self.species_array))) if rxn_profile is None else rxn_profile
         )
 
         # logger.info("conc array ", self.reaction_profile)
