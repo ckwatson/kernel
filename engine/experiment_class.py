@@ -31,7 +31,6 @@ class Experiment:
     reactions in one beaker/canister without mixing.
     """
 
-    stream = sys.stdout
     # ODE solver parameters
     abserr = 1.0e-8  # see documentation http://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.odeint.html
     relerr = 1.0e-6  # see documentation ^ same as above
