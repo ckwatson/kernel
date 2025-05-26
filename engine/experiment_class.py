@@ -273,14 +273,19 @@ class Experiment:
         # Fill the array with the Rate constant values. The formulas are:
         # e^{(Er - Ea) / RT}
         # e^{(Ep - Ea) / RT}
-        self.reactant_rate_constants = np.exp((self.reactant_energy_array - self.activated_energy_array) / self.RT)
-        self.product_rate_constants = np.exp((self.product_energy_array - self.activated_energy_array) / self.RT)
+        self.reactant_rate_constants = np.exp(
+            (self.reactant_energy_array - self.activated_energy_array) / self.RT
+        )
+        self.product_rate_constants = np.exp(
+            (self.product_energy_array - self.activated_energy_array) / self.RT
+        )
 
         # Fill the theoretical_Keq_array, which depends on the rate constant.
         # Calculates an array of Keq's for each elementary reaction, based on the theoretical definition.
         # This only makes sense for 'true' models, where the elementary reaction rates can be exactly calculated.
-        self.theoretical_Keq_array = self.reactant_rate_constants / self.product_rate_constants
-
+        self.theoretical_Keq_array = (
+            self.reactant_rate_constants / self.product_rate_constants
+        )
 
     # precalculates the function that returns an array of reaction rates for each elementary reaction
     # used in the function get_reaction_rate()
@@ -465,7 +470,6 @@ class Experiment:
             HANDY.warning(
                 "				We reached our max_Keq_steps without finding an 'appropriate' Keq"
             )
-
 
     def slice_array_by_time(
         self,
