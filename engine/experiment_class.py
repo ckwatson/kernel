@@ -54,6 +54,8 @@ class Experiment:
     RATE_CONSTANT_EXTRACTION_START_POINT = 0.0
     RATE_CONSTANT_EXTRACTION_END_POINT = 12.0
 
+    reaction_profile: np.ndarray
+
     def __init__(
         self,
         input_reaction_mechanism: reaction_mechanism,
