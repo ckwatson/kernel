@@ -7,7 +7,6 @@ import os
 import sys
 import json
 import numpy as np
-from . import reagent
 from . import reaction_mechanism_class
 
 

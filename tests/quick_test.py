@@ -3,7 +3,6 @@ import os
 from ..data.molecular_species import molecular_species
 from ..data.reaction_mechanism_class import reaction_mechanism
 from ..data.condition_class import Condition
-from ..data.reagent import reagent
 from ..data.puzzle_class import puzzle
 from ..data.solution_class import solution
 
@@ -18,7 +17,6 @@ if __name__ == "__main__":
         molecular_species,
         Condition,
         reaction_mechanism,
-        reagent,
         puzzle,
         solution,
     ]:

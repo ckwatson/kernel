@@ -7,7 +7,6 @@ import os
 import sys
 import numpy as np
 from . import json_base_class
-from . import reagent
 
 
 class Condition(json_base_class.Json_base):
