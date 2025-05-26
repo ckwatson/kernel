@@ -328,9 +328,11 @@ class Experiment:
 
     def find_experimental_Keq_array(self, job_id: str = "unknown job") -> np.ndarray:
         """
-        Calculates an array of Keq's for each elementary reaction, BASED ON numerical approximation.
-        This method is designed to be used for 'solution/proposed' models, calculating Keq based on concentrations of reacting species.
-        The Keq can be determined by a ratio of concentrations of species when the reaction profile has reached a 'plateau'.
+        Calculate an array of equilibrium constants (Keq) for each elementary reaction using numerical approximation.
+
+        This method is intended for 'solution/proposed' models, where Keq is determined based on the concentrations
+        of reacting species. The equilibrium constants are calculated as the ratio of concentrations of species
+        when the reaction profile has reached a steady state or 'plateau'.
         """
         logger = logging.getLogger(job_id).getChild("find_experimental_Keq_array")
         logger.debug("               Finding Keq array empirically...")
