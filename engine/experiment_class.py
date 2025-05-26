@@ -25,17 +25,15 @@ from scipy.integrate import (
     ode,
 )  # solve differential rate equation, we want flat concentrations at long [http://docs.scipy.org/doc/scipy/reference/integrate.html] (the doc for integrate)
 
-# Initialize logger:
-logger = logging.getLogger(
-    __name__
-)  # tell the program to send messages on its own behalf.
-
-# suppress extremely small numbers, numbers appear as zero if < 1E-12
+# suppress tiny numbers, numbers appear as zero if < 1E-12
 np.set_printoptions(suppress=True)
 
 
-# this object represents a rxn/experiment, a mixing of beakers, production of some reactants
 class Experiment:
+    """
+    Represents a chemical reaction or experiment, simulating the mixing of beakers/canisters or the spontaneous
+    reactions in one beaker/canister without mixing.
+    """
     __number_of_instances_of_self = 0
     stream = sys.stdout
     # ODE solver parameters
@@ -780,8 +778,3 @@ class Experiment:
             self.time_array = self.time_array[:cutoff]
             self.reaction_profile = self.reaction_profile[:cutoff]
         return cutoff
-
-if __name__ == "__main__":
-    logger.info("succesfully imported experiment_class")
-
-# pass
