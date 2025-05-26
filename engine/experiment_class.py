@@ -232,7 +232,6 @@ class Experiment:
             np.multiply(self.species_energy_array, self.reactant_coefficient_array),
             axis=1,
         )
-        return True
 
     # calculates the total energy of all species that are products for each reaction
     def find_Ep(self):
@@ -240,7 +239,6 @@ class Experiment:
             np.multiply(self.species_energy_array, self.product_coefficient_array),
             axis=1,
         )
-        return True
 
     # creates the Ea array = 1/3/5kJ + max{Er, Ep}
     # calculates the activation energies, where the values are ENERGY_BARRIER plus the max of (Er, Ep) for each reaction
@@ -258,7 +256,6 @@ class Experiment:
             np.maximum(self.reactant_energy_array, self.product_energy_array),
             Ea_scaling_factor,
         )
-        return True
 
     def find_rate_constant(self):
         """
