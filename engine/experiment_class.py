@@ -609,24 +609,8 @@ class Experiment:
         )
 
         # we calculate the Keq based on experimental definition, concentration ratios on the 'plateau'
-        self.find_experimental_Keq_array(job_id)
-        # reshape, and handling any NaN's
-        exKeq = self.experimental_Keq_array.reshape(1, -1)
-        exKeq = np.nan_to_num(exKeq)
-
-        # calculate the Q value (Rate = f * Q)
-        # this is why we reshaped our arrays
-        Q = (
-            np.prod(
-                np.power(slice_of_concentrations, self.reactant_coefficient_array),
-                axis=2,
-            )
-            - np.prod(
-                np.power(slice_of_concentrations, self.product_coefficient_array),
-                axis=2,
-            )
-            / exKeq
-        )
+        emKeq = self.find_experimental_Keq_array(job_id)
+        Q = self.get_reaction_quotient_over_time(emKeq, slice_of_concentrations)
         logger.debug(f"               `Q` is a {Q.shape} array.")
 
         # logger.info(exKeq.shape, Q.shape, self.number_of_reactions ,self.reactant_coefficient_array.shape, self.product_coefficient_array.shape)
@@ -727,6 +711,24 @@ class Experiment:
             raise HANDY.NegativeCoefficientException(check)
 
         return self.rate_constant_array
+
+    def get_reaction_quotient_over_time(self, emKeq: np.ndarray, slice_of_concentrations: np.ndarray) -> np.ndarray:
+        """
+        > The reaction quotient (Q) measures the relative amounts of products and reactants present during a reaction at a particular point in time.
+        ([source](https://chem.libretexts.org/Bookshelves/Physical_and_Theoretical_Chemistry_Textbook_Maps/Supplemental_Modules_(Physical_and_Theoretical_Chemistry)/Equilibria/Chemical_Equilibria/The_Reaction_Quotient))
+        @param emKeq: a 1D tensor of shape (number_of_reactions,) containing the experimental equilibrium constants for each reaction.
+        @param slice_of_concentrations: a 3D tensor of shape (n, 1, number_of_species) containing the concentrations of each species at each time point.
+        @return: Q: a 2D tensor of shape (n, number_of_reactions) containing the reaction quotient for each reaction at each time point.
+        """
+        # reshape, and handling any NaN's
+        exKeq = emKeq.reshape(1, -1)
+        exKeq = np.nan_to_num(exKeq)
+        # calculate the Q value (Rate = f * Q)
+        # this is why we reshaped our arrays
+        forward_rates = np.prod(np.power(slice_of_concentrations, self.reactant_coefficient_array), axis=2, )
+        reverse_rates = np.prod(np.power(slice_of_concentrations, self.product_coefficient_array), axis=2, )
+        return forward_rates - reverse_rates / exKeq
+
 
     def find_flat_region(
         self, job_id: str, threshold: float = 1e-15, remove: bool = True
