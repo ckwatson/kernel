@@ -557,7 +557,8 @@ class Experiment:
             end=Experiment.RATE_CONSTANT_EXTRACTION_END_POINT,
         )
 
-        # Calculate the change in concentration over time (dSdt)
+        # Calculate the change in concentration over time for each species (dS/dt).
+        # This is finite‐difference approximations of the time‐derivatives.
         # dS is the change in concentration, it is a 2D tensor of shape (n-1, number_of_species).
         dS = np.diff(slice_of_concentrations, axis=0)
         # dt is the change in time, it is a 1D tensor of shape (n-1,).
@@ -577,7 +578,7 @@ class Experiment:
             # + ":\n                 " + HANDY.np_repr(slice_of_concentrations).replace("\n", "\n                 ")
         )
 
-        # Do the same to dSdt, so that it is a 3D tensor with the same shape as `slice_of_concentrations`.
+        # Do the same to dS/dt, so that it is a 3D tensor with the same shape as `slice_of_concentrations`.
         logger.debug(f"               dS/dt is of shape {dSdt.shape}.")
         dSdt = dSdt.reshape(-1, 1, self.number_of_species)
         logger.debug(
