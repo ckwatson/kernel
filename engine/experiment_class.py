@@ -255,19 +255,23 @@ class Experiment:
             self.reactant_rate_constants / self.product_rate_constants
         )
 
-    # precalculates the function that returns an array of reaction rates for each elementary reaction
-    # used in the function get_reaction_rate()
     def find_reaction_rate_function(self):
-        self.reaction_rate_function = lambda conc: np.subtract(
-            self.reactant_rate_constants
-            * np.prod(
-                np.power(conc, self.reactant_coefficient_array), axis=1, dtype=float
-            ),
-            self.product_rate_constants
-            * np.prod(
-                np.power(conc, self.product_coefficient_array), axis=1, dtype=float
-            ),
-        )
+        """
+        Creates a reaction rate function based on the reactant and product rate constants.
+        This function calculates the reaction rate for each elementary reaction based on the concentrations
+        of the reactants and products.
+        """
+
+        def reaction_rate(conc):
+            reactant_rates = self.reactant_rate_constants * np.prod(
+                conc**self.reactant_coefficient_array, axis=1
+            )
+            product_rates = self.product_rate_constants * np.prod(
+                conc**self.product_coefficient_array, axis=1
+            )
+            return reactant_rates - product_rates
+
+        self.reaction_rate_function = reaction_rate
 
     # calculates an array of Keq's for each elementary reaction, BASED ON the theoretical defintion
     # this method is designed to be used for 'true' models, where the elementary reaction rates can be exactly calculated
