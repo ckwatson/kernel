@@ -610,7 +610,7 @@ class Experiment:
 
         # we calculate the Keq based on experimental definition, concentration ratios on the 'plateau'
         emKeq = self.find_experimental_Keq_array(job_id)
-        Q = self.get_reaction_quotient_over_time(emKeq, slice_of_concentrations)
+        Q = self.get_mass_action_imbalance(emKeq, slice_of_concentrations)
         logger.debug(f"               `Q` is a {Q.shape} array.")
 
         # logger.info(exKeq.shape, Q.shape, self.number_of_reactions ,self.reactant_coefficient_array.shape, self.product_coefficient_array.shape)
@@ -712,23 +712,40 @@ class Experiment:
 
         return self.rate_constant_array
 
-    def get_reaction_quotient_over_time(self, emKeq: np.ndarray, slice_of_concentrations: np.ndarray) -> np.ndarray:
+    def get_mass_action_imbalance(
+        self, emKeq: np.ndarray, slice_of_concentrations: np.ndarray
+    ) -> np.ndarray:
         """
-        > The reaction quotient (Q) measures the relative amounts of products and reactants present during a reaction at a particular point in time.
-        ([source](https://chem.libretexts.org/Bookshelves/Physical_and_Theoretical_Chemistry_Textbook_Maps/Supplemental_Modules_(Physical_and_Theoretical_Chemistry)/Equilibria/Chemical_Equilibria/The_Reaction_Quotient))
-        @param emKeq: a 1D tensor of shape (number_of_reactions,) containing the experimental equilibrium constants for each reaction.
-        @param slice_of_concentrations: a 3D tensor of shape (n, 1, number_of_species) containing the concentrations of each species at each time point.
-        @return: Q: a 2D tensor of shape (n, number_of_reactions) containing the reaction quotient for each reaction at each time point.
+        Calculate the mass action imbalance (Q) for a set of chemical reactions.
+        This method computes the reaction quotient (Q) for each elementary reaction based on the concentrations of the
+        reactants and products at a given time point, scaling the latter with the empirically-determined equilibrium
+        constant (Keq).
+
+        The formula used is $Q = (∏[R_j]^{μ_j}) − (∏[P_i]^{ν_i} / Keq)$.
+
+        See [Law of mass action](https://en.wikipedia.org/wiki/Law_of_mass_action) for more details.
+
+        Distinguish this with the reaction quotient, another quantity often denoted with Q, which is the ratio of the
+        concentrations of products to reactants at a given time point, without scaling by the equilibrium constant.
+
+        @param emKeq: The experimental equilibrium constant for each reaction.
+        @param slice_of_concentrations: A 3D array of concentrations of species at different time points.
+        @return: A 1D array of the mass action imbalance (Q) for each reaction.
         """
         # reshape, and handling any NaN's
         exKeq = emKeq.reshape(1, -1)
         exKeq = np.nan_to_num(exKeq)
         # calculate the Q value (Rate = f * Q)
         # this is why we reshaped our arrays
-        forward_rates = np.prod(np.power(slice_of_concentrations, self.reactant_coefficient_array), axis=2, )
-        reverse_rates = np.prod(np.power(slice_of_concentrations, self.product_coefficient_array), axis=2, )
+        forward_rates = np.prod(
+            np.power(slice_of_concentrations, self.reactant_coefficient_array),
+            axis=2,
+        )
+        reverse_rates = np.prod(
+            np.power(slice_of_concentrations, self.product_coefficient_array),
+            axis=2,
+        )
         return forward_rates - reverse_rates / exKeq
-
 
     def find_flat_region(
         self, job_id: str, threshold: float = 1e-15, remove: bool = True
