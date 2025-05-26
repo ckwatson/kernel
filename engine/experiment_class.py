@@ -600,6 +600,36 @@ class Experiment:
         return array_to_slice[condition]
 
     def get_matrix_rate_solution(self, job_id: str = "unknown job"):
+        """
+        Computes the rate constants for a chemical reaction system using a matrix-based approach.
+
+        This method calculates the forward and backward rate constants for a set of chemical reactions
+        based on experimental data, including concentration profiles and reaction coefficients. It uses
+        matrix operations to solve for the rate constants and ensures that the results are consistent
+        with the experimental equilibrium constants.
+
+        Args:
+            job_id (str): A unique identifier for the job, used for logging purposes. Defaults to "unknown job".
+
+        Returns:
+            np.ndarray: A 2D array containing the forward and backward rate constants for each reaction.
+                        The shape of the array is (number_of_reactions, 2), where the first column contains
+                        the forward rate constants and the second column contains the backward rate constants.
+
+        Raises:
+            HANDY.NegativeCoefficientException: If any of the calculated rate constants are negative.
+
+        Notes:
+            - The method slices the concentration and time arrays to focus on a specific time range for
+              rate constant extraction.
+            - It calculates the change in concentration over time (dS/dt) and reshapes the arrays to
+              facilitate matrix operations.
+            - The equilibrium constant (Keq) is determined experimentally and used to compute the Q value,
+              which represents the reaction quotient.
+            - The method constructs matrices (A, M, X) to solve for the rate constants using eigenvalue
+              decomposition and matrix inversion.
+            - Negative rate constants are checked and an exception is raised if any are found.
+        """
         logger = logging.getLogger(job_id).getChild("get_matrix_rate_solution")
         # get the concentration values and trim the dSdt to match the sample size
         slice_of_concentrations = self.slice_array_by_time(
