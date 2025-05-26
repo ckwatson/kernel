@@ -180,7 +180,7 @@ class experiment:
     # a conceptual experiment has the need to add or remove elementary reactions from the experiment object
     #
     # I'm not 100% sure why i dont have an add_rxn function at the moment... I will find out in the future
-    def remove_rxn(self, reaction_number, axis=0):
+    def remove_rxn(self, reaction_number):
 
         # logger.info("Before delete", self.coefficient_array.shape, self.reactant_coefficient_array.shape, self.product_coefficient_array.shape)
 
