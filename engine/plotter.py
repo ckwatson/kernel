@@ -117,6 +117,9 @@ def sub_plots(
             if_SkipDrawingSpeciesWithZeroConcentrations
             and not any(y != 0 for y in data_y_this)
         ):
+            logger.info(
+                f"                True model for {name} at location {location + 1}."
+            )
             sub_individual.plot(
                 data_x_true,
                 data_y_this,
@@ -138,6 +141,9 @@ def sub_plots(
                 if_SkipDrawingSpeciesWithZeroConcentrations
                 and not any(y != 0 for y in data_y_this)
             ):
+                logger.info(
+                    f"                User model for {name} at location {location + 1}."
+                )
                 sub_individual.plot(
                     data_x_user,
                     data_y_this,
