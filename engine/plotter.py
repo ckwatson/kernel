@@ -57,7 +57,13 @@ def fake_writer(plot):
     return '<svg viewBox="0 0 2520 1584">' + data.decode("utf-8")[367:]
 
 
-def sub_plots(job_id: str,plottingDict: Dict[str, int], true_data=None, user_data=None, newSize: int = 1000):
+def sub_plots(
+    job_id: str,
+    plottingDict: Dict[str, int],
+    true_data=None,
+    user_data=None,
+    newSize: int = 1000,
+):
     """
     @param plottingDict: from species names to their locations in the data array.
     """
@@ -73,10 +79,12 @@ def sub_plots(job_id: str,plottingDict: Dict[str, int], true_data=None, user_dat
     )
     # Arrange the subplots in a square grid. Figure out how many rows and columns we need.
     dimensions = int(np.ceil(np.sqrt(number_of_plots)))
-    logger.info(f"        (b) Attempting to arrange {number_of_plots} plots over a {dimensions}x{dimensions} square grid:")
+    logger.info(
+        f"        (b) Attempting to arrange {number_of_plots} plots over a {dimensions}x{dimensions} square grid:"
+    )
     rc("font", size=22)
     sub_combined = combined.add_subplot(
-        1,1,1, title="Combined True Profile", xlabel="time", ylabel="Concentration"
+        1, 1, 1, title="Combined True Profile", xlabel="time", ylabel="Concentration"
     )
     if user_data is not None:
         true_data = make_same_length(job_id, true_data, user_data)
@@ -155,7 +163,9 @@ def sub_plots(job_id: str,plottingDict: Dict[str, int], true_data=None, user_dat
     return profiles, combined
 
 
-def make_same_length(job_id: str, true_data:np.ndarray, user_data:np.ndarray)->np.ndarray:
+def make_same_length(
+    job_id: str, true_data: np.ndarray, user_data: np.ndarray
+) -> np.ndarray:
     """
     Align the shape of the trueDataSet to that of the userDataSet (by extending or truncating trueDataSet).
     """
@@ -163,7 +173,9 @@ def make_same_length(job_id: str, true_data:np.ndarray, user_data:np.ndarray)->n
     if true_data.size == 0 or user_data.size == 0:
         logger.error("            One of the datasets is empty. Cannot align shapes.")
         return true_data
-    logger.info(f"            Aligning shapes of userDataSet ({user_data.shape}) and trueDataSet ({true_data.shape}).")
+    logger.info(
+        f"            Aligning shapes of userDataSet ({user_data.shape}) and trueDataSet ({true_data.shape})."
+    )
     # if the trueDataSet is shorter, extend it to match the length of the userDataSet
     if true_data.shape[1] < user_data.shape[1]:
         length_difference = user_data.shape[1] - true_data.shape[1]
@@ -179,7 +191,9 @@ def make_same_length(job_id: str, true_data:np.ndarray, user_data:np.ndarray)->n
         )
         logger.info(f"            The trueDataSet is now {true_data.shape}.")
     elif true_data.shape[1] > user_data.shape[1]:
-        logger.info("            The trueDataSet is longer. Truncating it to match the length of the userDataSet.")
+        logger.info(
+            "            The trueDataSet is longer. Truncating it to match the length of the userDataSet."
+        )
         true_data = true_data[:, : user_data.shape[1]]
     return true_data
 
