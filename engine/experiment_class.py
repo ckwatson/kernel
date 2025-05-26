@@ -31,7 +31,6 @@ class Experiment:
     reactions in one beaker/canister without mixing.
     """
 
-    __number_of_instances_of_self = 0
     stream = sys.stdout
     # ODE solver parameters
     abserr = 1.0e-8  # see documentation http://docs.scipy.org/doc/scipy/reference/generated/scipy.integrate.odeint.html
@@ -64,15 +63,6 @@ class Experiment:
         Keq_threshold: Optional[float] = None,
         mass_balance_threshold: Optional[float] = None,
     ):
-
-        # debugging,
-        # logger.info("Type of reaction mechanism", type(input_reaction_mechanism))
-        # logger.info("Input conc", rxn_profile[0][:])
-
-        Experiment.__number_of_instances_of_self += (
-            1  # count the creation of this object
-        )
-
         # see the following hyperlink for documentation on this string formatting:
         # https://docs.python.org/release/3.0.1/library/string.html#formatstrings
         formatting_string = "I'm born, wahoo!   My temperature is: {0:>8.2F}\N{DEGREE SIGN}C  {1:>8.2F}\N{DEGREE SIGN}K"
@@ -91,14 +81,6 @@ class Experiment:
         self.product_coefficient_array = (
             input_reaction_mechanism.product_coefficient_array
         )
-
-        # logger.info(  "\nThe list of species: "				   + str(self.species_array),
-        # 		"\nThe number of reactions: "			   + str(self.number_of_reactions),
-        # 		"\nThe number of species: "				 + str(self.number_of_species),
-        # 		"\nThe coefficient array: \n"			   + str(self.coefficient_array),
-        # 		"\n\nThe coefficients of the reactants: \n" + str(self.reactant_coefficient_array),
-        # 		"\n\nThe coefficients of the products: \n"  + str(self.product_coefficient_array),
-        # 		"\n")
 
         # as sorted single values
         self.temp = float(input_temp + Experiment.TEMPERATURE_CONVERSION_FACTOR)
@@ -206,21 +188,10 @@ class Experiment:
 
         # logger.info("Had to delete reaciton " + str(reaction_number+1))
 
-    # any code that happens just before the object is deleted
-    def __del__(self):
-        Experiment.__number_of_instances_of_self -= 1
-        # logger.info("this is the thing I do after I'm dead")
-
     # this method  is invoked when str() is called on an experiment_class object
     def __str__(self):
         user_ouput = "This is an instance of an experiment class object"
         return user_ouput
-
-    # this function returns the number of instances of the experiment_class, it is called by the experiment_class template
-    # just a simple example of a classmethod
-    @classmethod
-    def get_number_of_instances(cls_obj):
-        return cls_obj.__number_of_instances_of_self
 
     # returns an array of the difference between products and reactant for each elementary reaction
     def get_delta_E(self):
