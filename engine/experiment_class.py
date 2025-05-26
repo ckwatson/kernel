@@ -273,9 +273,6 @@ class Experiment:
 
         self.reaction_rate_function = reaction_rate
 
-    # calculates an array of Keq's for each elementary reaction, BASED ON the theoretical defintion
-    # this method is designed to be used for 'true' models, where the elementary reaction rates can be exactly calculated
-
     def find_experimental_Keq_array(self, job_id: str = "unknown job") -> np.ndarray:
         """
         Calculate an array of equilibrium constants (Keq) for each elementary reaction using numerical approximation.
