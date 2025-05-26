@@ -34,6 +34,7 @@ class Experiment:
     Represents a chemical reaction or experiment, simulating the mixing of beakers/canisters or the spontaneous
     reactions in one beaker/canister without mixing.
     """
+
     __number_of_instances_of_self = 0
     stream = sys.stdout
     # ODE solver parameters
@@ -59,13 +60,13 @@ class Experiment:
     RATE_CONSTANT_EXTRACTION_END_POINT = 12.0
 
     def __init__(
-            self,
-            input_reaction_mechanism: reaction_mechanism,
-            input_temp: float,
-            input_time: Optional[np.ndarray] = None,
-            rxn_profile: Optional[np.ndarray] = None,
-            Keq_threshold: Optional[float] = None,
-            mass_balance_threshold: Optional[float] = None,
+        self,
+        input_reaction_mechanism: reaction_mechanism,
+        input_temp: float,
+        input_time: Optional[np.ndarray] = None,
+        rxn_profile: Optional[np.ndarray] = None,
+        Keq_threshold: Optional[float] = None,
+        mass_balance_threshold: Optional[float] = None,
     ):
 
         # debugging,
@@ -107,9 +108,13 @@ class Experiment:
         self.temp = float(input_temp + Experiment.TEMPERATURE_CONVERSION_FACTOR)
         self.RT = R * np.asfarray(input_temp + Experiment.TEMPERATURE_CONVERSION_FACTOR)
         self.scaling_factor = Experiment.SCALING_FACTOR
-        self.Keq_threshold = Keq_threshold if (Keq_threshold is not None) else pow(10, -7)
+        self.Keq_threshold = (
+            Keq_threshold if (Keq_threshold is not None) else pow(10, -7)
+        )
         self.mass_balance_threshold = (
-            mass_balance_threshold if (mass_balance_threshold is not None) else pow(10, -7)
+            mass_balance_threshold
+            if (mass_balance_threshold is not None)
+            else pow(10, -7)
         )
 
         # the Es, Ea, Er, Ep matrices
@@ -141,7 +146,9 @@ class Experiment:
         # the species concentration values at each time point, and the initial conc values
         # np.zeros(self.time_array.size[0], number_of_species)
         self.reaction_profile = (
-            np.zeros((1, len(self.species_array))) if rxn_profile is None else rxn_profile
+            np.zeros((1, len(self.species_array)))
+            if rxn_profile is None
+            else rxn_profile
         )
 
         # logger.info("conc array ", self.reaction_profile)
@@ -319,7 +326,7 @@ class Experiment:
         )
         return True
 
-    def find_experimental_Keq_array(self, job_id: str="unknown job") -> np.ndarray:
+    def find_experimental_Keq_array(self, job_id: str = "unknown job") -> np.ndarray:
         """
         Calculates an array of Keq's for each elementary reaction, BASED ON numerical approximation.
         This method is designed to be used for 'solution/proposed' models, calculating Keq based on concentrations of reacting species.
@@ -331,21 +338,28 @@ class Experiment:
         initial_timestep = self.find_flat_region(job_id, remove=False)
         # Calculate the average of each chemical species over this 'plateau'.
         # This is the concentration at equilibrium. ['S1'mean, 'S2'mean, ...., 'Sa'mean]
-        concentrations = np.nanmean(
-            self.reaction_profile[initial_timestep:], axis=0
-        )
+        concentrations = np.nanmean(self.reaction_profile[initial_timestep:], axis=0)
         # take product of ([A]^a * [B]^b * ... etc) for each elementary reaction
-        logger.debug("                 concentrations at equilibrium: " + HANDY.np_repr(concentrations))
-        logger.debug("                 coefficient_array: " + HANDY.np_repr(self.coefficient_array))
-        Keq = np.prod(
-            np.power(concentrations, self.coefficient_array), axis=1
+        logger.debug(
+            "                 concentrations at equilibrium: "
+            + HANDY.np_repr(concentrations)
         )
+        logger.debug(
+            "                 coefficient_array: "
+            + HANDY.np_repr(self.coefficient_array)
+        )
+        Keq = np.prod(np.power(concentrations, self.coefficient_array), axis=1)
         Keq = np.nan_to_num(Keq)
         logger.debug(f"                 Experimental Keq: {Keq}")
         self.experimental_Keq_array = Keq
         return Keq
 
-    def find_reaction_profile(self, job_id:str="unknown job", input_concentration=None, diagnostic_output=False):
+    def find_reaction_profile(
+        self,
+        job_id: str = "unknown job",
+        input_concentration=None,
+        diagnostic_output=False,
+    ):
         """
         Solves the coupled ode's, effectively 'runs' the experiment
         Remember that the goal here is to find the 'plateau' - i.e. when the change in the Keq since the last 'step' is below some threshold we consider the reaction as 'completed'
@@ -353,6 +367,7 @@ class Experiment:
         diagnostic_output is a boolean parameter that, by default, supresses the large amount of possible output from the ode solver
         """
         logger = logging.getLogger(job_id).getChild("find_reaction_profile")
+
         # the 'calculation' step
         def condition_elementary(conc, time):
             # [a,b,c,d,e](powered 'down') = they're pushed down [x,0,0,0,0] the x locations of a 2D array
@@ -453,10 +468,10 @@ class Experiment:
 
                 # compare the last and the current Keq
                 if np.all(
-                        np.fabs(current_ln_Keq - previous_ln_Keq)
-                        < np.asarray(
-                            [self.Keq_threshold for x in range(self.number_of_reactions)]
-                        )
+                    np.fabs(current_ln_Keq - previous_ln_Keq)
+                    < np.asarray(
+                        [self.Keq_threshold for x in range(self.number_of_reactions)]
+                    )
                 ):
                     logger.info("" + str(int(start_time)) + " -- close enough!")
                     break
@@ -518,8 +533,13 @@ class Experiment:
         else:
             return rxn_rate
 
-    def slice_array_by_time(self, job_id: str, array_to_slice: Optional[np.ndarray]=None, start: Optional[float] = None, end: Optional[float] = None,
-                            ):
+    def slice_array_by_time(
+        self,
+        job_id: str,
+        array_to_slice: Optional[np.ndarray] = None,
+        start: Optional[float] = None,
+        end: Optional[float] = None,
+    ):
         """
         Returns a slice of `array_to_slice` based on the provided start and end times.
         If `array_to_slice` is None, it defaults to the experiment's `reaction_profile`.
@@ -530,9 +550,13 @@ class Experiment:
         if array_to_slice is None:
             # if no array_to_slice is provided, we use the reaction_profile
             array_to_slice = self.reaction_profile
-            logger.info("               No array to slice provided, using the reaction profile.")
+            logger.info(
+                "               No array to slice provided, using the reaction profile."
+            )
         if start is None or end is None:
-            logger.info("               No slice input provided, returning the full reaction profile.")
+            logger.info(
+                "               No slice input provided, returning the full reaction profile."
+            )
             return array_to_slice
         start_time = float(start)
         end_time = float(end)
@@ -540,35 +564,42 @@ class Experiment:
         if end_time >= self.time_array[-1]:
             logger.warning(
                 f"               End time selected, {end_time}, is larger than the time-array. "
-                f"Slicing up to the last available time, {self.time_array[-1]}.")
+                f"Slicing up to the last available time, {self.time_array[-1]}."
+            )
             end_time = self.time_array[-1]
         if start_time >= self.time_array[-1]:
             logger.warning(
                 f"               Start time selected, {start_time}, is larger than the time-array. "
-                f"Slicing up to the last available time, {self.time_array[-1]}.")
+                f"Slicing up to the last available time, {self.time_array[-1]}."
+            )
             start_time = self.time_array[-1]
         if start_time < self.time_array[0]:
             logger.warning(
                 f"               Start time selected, {start_time}, is smaller than the first time value. "
-                f"Slicing from the first available time, {self.time_array[0]}.")
+                f"Slicing from the first available time, {self.time_array[0]}."
+            )
             start_time = self.time_array[0]
         if end_time < self.time_array[0]:
             logger.warning(
                 f"               End time selected, {end_time}, is smaller than the first time value. "
-                f"Slicing from the first available time, {self.time_array[0]}.")
+                f"Slicing from the first available time, {self.time_array[0]}."
+            )
             end_time = self.time_array[0]
         if start_time > end_time:
             logger.warning(
                 f"               Start time {start_time} should be earlier than end time {end_time}. "
-                f"Reversing the order.")
+                f"Reversing the order."
+            )
             start_time, end_time = end_time, start_time
-        logger.info(f"               Slicing the {start_time}~{end_time} part from the time-array with a length of "
-                    f"{self.time_array[-1]:.2f}.")
+        logger.info(
+            f"               Slicing the {start_time}~{end_time} part from the time-array with a length of "
+            f"{self.time_array[-1]:.2f}."
+        )
         # creating the masking array to select the sliced versions of the reaction_profile.
         condition = (self.time_array >= start_time) & (self.time_array <= end_time)
         return array_to_slice[condition]
 
-    def get_matrix_rate_solution(self, job_id: str="unknown job"):
+    def get_matrix_rate_solution(self, job_id: str = "unknown job"):
         logger = logging.getLogger(job_id).getChild("get_matrix_rate_solution")
         # get the concentration values and trim the dSdt to match the sample size
         slice_of_concentrations = self.slice_array_by_time(
@@ -577,7 +608,8 @@ class Experiment:
             start=Experiment.RATE_CONSTANT_EXTRACTION_START_POINT,
             end=Experiment.RATE_CONSTANT_EXTRACTION_END_POINT,
         )
-        logger.debug(f"               Concentrations over the selected period of time is in an array of shape {slice_of_concentrations.shape}"
+        logger.debug(
+            f"               Concentrations over the selected period of time is in an array of shape {slice_of_concentrations.shape}"
             # + ":\n                 " + HANDY.np_repr(slice_of_concentrations).replace("\n", "\n                 ")
         )
 
@@ -600,7 +632,9 @@ class Experiment:
         # Trim the first elements off the concentration matrix to match the length of the dS/dt matrix.
         slice_of_concentrations = slice_of_concentrations[1:]
         # Reshape the concentration array to be a 3D tensor, where the first dimension is the number of time points, the second dimension is 1 (to allow for broadcasting), and the third dimension is the number of species.
-        slice_of_concentrations = slice_of_concentrations.reshape(-1, 1, self.number_of_species)
+        slice_of_concentrations = slice_of_concentrations.reshape(
+            -1, 1, self.number_of_species
+        )
         logger.debug(
             f"               We reshaped `slice_of_concentrations` to {slice_of_concentrations.shape}"
             # + ":\n                 " + HANDY.np_repr(slice_of_concentrations).replace("\n", "\n                 ")
@@ -620,16 +654,22 @@ class Experiment:
             floatfmt=".4g",
             tablefmt="github",
         )
-        logger.info(f"               Reactant coefficients, Coef(f), is a {self.reactant_coefficient_array.shape}"
-                    f" array:\n                 " + str(table).replace("\n", "\n                 "))
+        logger.info(
+            f"               Reactant coefficients, Coef(f), is a {self.reactant_coefficient_array.shape}"
+            f" array:\n                 "
+            + str(table).replace("\n", "\n                 ")
+        )
         table = tabulate(
             self.product_coefficient_array,
             headers=self.species_array,
             floatfmt=".4g",
             tablefmt="github",
         )
-        logger.info(f"               Product coefficients, Coef(b), is a {self.product_coefficient_array.shape}"
-                    f" array:\n                 " + str(table).replace("\n", "\n                 "))
+        logger.info(
+            f"               Product coefficients, Coef(b), is a {self.product_coefficient_array.shape}"
+            f" array:\n                 "
+            + str(table).replace("\n", "\n                 ")
+        )
 
         # we calculate the Keq based on experimental definition, concentration ratios on the 'plateau'
         self.find_experimental_Keq_array(job_id)
@@ -639,8 +679,17 @@ class Experiment:
 
         # calculate the Q value (Rate = f * Q)
         # this is why we reshaped our arrays
-        Q = np.prod(np.power(slice_of_concentrations, self.reactant_coefficient_array), axis=2) - \
-                np.prod(np.power(slice_of_concentrations, self.product_coefficient_array), axis=2) / exKeq
+        Q = (
+            np.prod(
+                np.power(slice_of_concentrations, self.reactant_coefficient_array),
+                axis=2,
+            )
+            - np.prod(
+                np.power(slice_of_concentrations, self.product_coefficient_array),
+                axis=2,
+            )
+            / exKeq
+        )
         logger.debug(f"               `Q` is a {Q.shape} array.")
 
         # logger.info(exKeq.shape, Q.shape, self.number_of_reactions ,self.reactant_coefficient_array.shape, self.product_coefficient_array.shape)
@@ -656,11 +705,13 @@ class Experiment:
 
         # Create the A matrix by broadcasting the coefficient array and multiplying with Q.
         A = self.coefficient_array[None, :, :] * Q
-        logger.info(f"               A is a {A.shape} array, "
-                    f"corresponding to (num_time_points, num_reactions, num_species).")
+        logger.info(
+            f"               A is a {A.shape} array, "
+            f"corresponding to (num_time_points, num_reactions, num_species)."
+        )
 
         # construct the M matrix
-        M = np.einsum('iaj,ibj->ab', A, A)
+        M = np.einsum("iaj,ibj->ab", A, A)
         logger.info(f"               M is a {M.shape} array.")
 
         # construct the X matrix
@@ -715,7 +766,9 @@ class Experiment:
         # 	+ "\n Masked evals: " + HANDY.np_repr(masked_e_values))
         for a in range(self.number_of_reactions):
             for b in range(self.number_of_reactions):
-                M_inverse[a, b] = np.sum(e_vectors[a, :] * e_vectors[b, :] / masked_e_values)
+                M_inverse[a, b] = np.sum(
+                    e_vectors[a, :] * e_vectors[b, :] / masked_e_values
+                )
 
         M_inverse = np.nan_to_num(M_inverse)
 
@@ -738,7 +791,9 @@ class Experiment:
 
         return self.rate_constant_array
 
-    def find_flat_region(self, job_id: str, threshold: float = 1e-15, remove: bool=True) -> int:
+    def find_flat_region(
+        self, job_id: str, threshold: float = 1e-15, remove: bool = True
+    ) -> int:
         """
         The simulation may have run way longer than necessary, resulting in a flat region in the reaction profile.
         This makes the graph hard to read, so we want to remove the flat region at the end of the reaction profile.
@@ -758,8 +813,10 @@ class Experiment:
         # If we have less than 100 time-steps, we sample all of them.
         num_samples = min(N, n)
         stride = max(1, N // num_samples)
-        logger.info(f"               Sampling the reaction profile every {stride} time-steps to find the flat region."
-                    f" That's {num_samples} points sampled from {N} time-steps available.")
+        logger.info(
+            f"               Sampling the reaction profile every {stride} time-steps to find the flat region."
+            f" That's {num_samples} points sampled from {N} time-steps available."
+        )
         sampled_profile = self.reaction_profile[::stride]
         has_flat_region = False
         for i in range(1, len(sampled_profile)):
