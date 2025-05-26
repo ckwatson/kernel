@@ -193,11 +193,12 @@ def preequilibrate_reagent(
         for name, index in mechanism.coefficient_dict.items():
             concentration_of_this_species = final_concentrations[index]
             if np.isnan(concentration_of_this_species):
-                logger.warning(
-                    '                 Concentration of "%s" is NaN. Falling back to un-pre-equilibrated concentrations. This is a bug.',
-                    name,
-                )
                 concentration_of_this_species = starting_concentrations[index]
+                logger.warning(
+                    '                 Concentration of "%s" is NaN. Falling back to un-pre-equilibrated concentration of %s. This is a bug.',
+                    name,
+                    concentration_of_this_species,
+                )
             condition.molecule_concentrations[name] += concentration_of_this_species
 
     # collect the equilibrated concentrations
@@ -230,7 +231,7 @@ def run_proposed_experiment(
     )
     try:
         # try to find the rate constants
-        rate_constants = proposed_model.get_matrix_rate_solution(job_id = job_id)
+        rate_constants = proposed_model.get_matrix_rate_solution(job_id=job_id)
         logger.debug("Rate Constants: %s", rate_constants)
     # try to handle bad rate constants
     except HANDY.NegativeCoefficientException as u_error:
@@ -257,7 +258,7 @@ def run_proposed_experiment(
                 proposed_model.remove_rxn(bad_rxn[0])
 
                 # try to find the rate constants again
-                rate_constants = proposed_model.get_matrix_rate_solution(job_id= job_id)
+                rate_constants = proposed_model.get_matrix_rate_solution(job_id=job_id)
 
             # if we fail again then crash
             except HANDY.NegativeCoefficientException:
@@ -282,7 +283,8 @@ def run_proposed_experiment(
     ]
     proposed_model.find_reaction_profile(
         job_id=job_id,
-        input_concentration=np.array(input_concentrations), diagnostic_output=diag
+        input_concentration=np.array(input_concentrations),
+        diagnostic_output=diag,
     )
     proposed_model.find_flat_region(job_id=job_id, remove=True)
     # TODO: ??? Missing a species????
