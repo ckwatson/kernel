@@ -502,38 +502,10 @@ class Experiment:
             HANDY.warning(
                 "				We reached our max_Keq_steps without finding an 'appropriate' Keq"
             )
-        logger.info("")
-
-        return True
-
-    # === GET FUNCTIONS === these might be unnecessary
-
-    # method description
-    def get_coef(self):
-        return self.coefficient_array
 
     # method description
     def get_reaction_rate_array(self, conc):
-        try:
-            rxn_rate = self.reaction_rate_function(conc)
-        except:
-            #
-            # logger.info("\n\n=============================== Error occured while trying to find the reaction rate ===============================\n"
-            # 	+ "\nThe conc shape" + str(conc.shape)
-            # 	+ "\nThe conc vals" + HANDY.np_repr(conc)
-            # 	+ "\nThe coef(f) shape" + str(self.reactant_coefficient_array.shape)
-            # 	+ "\nThe coef(f) vals" + HANDY.np_repr(self.reactant_coefficient_array)
-            # 	+ "\nThe coef(b) shape" + str(self.product_coefficient_array.shape)
-            # 	+ "\nThe coef(b) vals" + HANDY.np_repr(self.product_coefficient_array)
-            # 	+ "\nThe rate(f) shape" + str(self.reactant_rate_constants.shape)
-            # 	+ "\nThe rate(f) vals" + HANDY.np_repr(self.reactant_rate_constants)
-            # 	+ "\nThe rate(b) shape" + str(self.product_rate_constants.shape)
-            # 	+ "\nThe rate(b) vals" + HANDY.np_repr(self.product_rate_constants),
-            # 	file=sys.stderr)
-            # logger.info("Error occured while trying to find the reaction rate")
-            exit(0)
-        else:
-            return rxn_rate
+        return self.reaction_rate_function(conc)
 
     def slice_array_by_time(
         self,
