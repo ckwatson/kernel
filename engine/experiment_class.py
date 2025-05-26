@@ -4,7 +4,7 @@
 """module for the class experiment"""
 
 import sys, logging
-from typing import Tuple, Optional
+from typing import Optional
 
 import numpy as np
 import numpy.ma as ma
@@ -14,15 +14,11 @@ from kernel.data.reaction_mechanism_class import reaction_mechanism
 from . import handy_functions as HANDY
 
 # data file classes
-from ..data.puzzle_class import puzzle
-from ..data.condition_class import Condition
-from ..data.solution_class import solution
 
 # constants we import to help with integration
 from scipy.constants import R  # 8.3144621 J / ( mol * K )
 from scipy.integrate import (
     odeint,
-    ode,
 )  # solve differential rate equation, we want flat concentrations at long [http://docs.scipy.org/doc/scipy/reference/integrate.html] (the doc for integrate)
 
 # suppress tiny numbers, numbers appear as zero if < 1E-12
@@ -299,7 +295,6 @@ class Experiment:
                 np.power(conc, self.product_coefficient_array), axis=1, dtype=float
             ),
         )
-        return True
 
     # calculates an array of Keq's for each elementary reaction, BASED ON the theoretical defintion
     # this method is designed to be used for 'true' models, where the elementary reaction rates can be exactly calculated
@@ -349,28 +344,22 @@ class Experiment:
         logger = logging.getLogger(job_id).getChild("find_reaction_profile")
 
         # the 'calculation' step
-        def condition_elementary(conc, time):
+        def condition_elementary(conc):
             # [a,b,c,d,e](powered 'down') = they're pushed down [x,0,0,0,0] the x locations of a 2D array
             # but then multiplied across the other dimension, so [a1,b1,c1,d1,e1]
             # transpose the first array(rotate southwest at leftmost point)
             # multiply across and sum downwards
-            reaction_array = self.get_reaction_rate_array(conc)
-            dYdt = np.dot(reaction_array, self.coefficient_array)
-            return dYdt
+            reaction_array = self.reaction_rate_function(conc)
+            # This is the dY/dt, the change in concentration over time.
+            return np.dot(reaction_array, self.coefficient_array)
 
-        self.slice_counter = 0  #
-        self.time_slicee = None  #
+        self.slice_counter = 0
+        self.time_slicee = None
 
         # for diagnostic purposes
-        def condition_elementary_diagnostic(conc, time):
-            dYdt = condition_elementary(conc, time)
-
-            # logger.info("\nTime: " + str(time) + "		 " + "Time: " + str(self.time_slicee[self.slice_counter])
-            # 	+ "\nConc: " + HANDY.np_repr(conc)
-            # 	+ "\nRate: " + HANDY.np_repr(reaction_array)
-            # 	+ "\ndYdt: " + HANDY.np_repr(dYdt)
-            # 	)
-            # not 100% sure on whats happening here
+        def condition_elementary_diagnostic(conc):
+            dYdt = condition_elementary(conc)
+            # not 100% sure on what's happening here
             self.slice_counter = (
                 (self.slice_counter + 1)
                 if (self.slice_counter + 1 < len(self.time_slicee))
@@ -380,7 +369,6 @@ class Experiment:
 
         # the two floats that we use to compare each step
         previous_ln_Keq = None
-        current_ln_Keq = None
 
         # if new concentrations are provided then 'reset' any previously held values
         if input_concentration is not None:
@@ -391,9 +379,6 @@ class Experiment:
         else:
             ode_conc = self.reaction_profile[0, :]
             self.reaction_profile = None
-
-        # logger.info(  "\nThe initial concentration: "			 + str(ode_conc),
-        # 		"\n")
 
         # the 'calculation' loop
         logger.info("				Calculating... ")
