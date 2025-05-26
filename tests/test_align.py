@@ -1,6 +1,6 @@
 import numpy as np
 
-from kernel.engine.plotter import make_same_length
+from kernel.engine.align import make_same_length
 
 
 def test_make_same_length_true_data_shorter():

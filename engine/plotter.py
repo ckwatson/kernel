@@ -11,6 +11,7 @@ from typing import Dict
 import numpy as np
 from matplotlib.pyplot import figure
 from matplotlib import rc
+from kernel.engine import align
 
 # Fixes "UserWarning: Starting a Matplotlib GUI outside of the main thread will likely fail".
 # https://stackoverflow.com/a/74471578/1147061
@@ -59,16 +60,13 @@ def fake_writer(plot):
 
 def sub_plots(
     job_id: str,
-    plottingDict: Dict[str, int],
+    plotting_dict: Dict[str, int],
     true_data=None,
     user_data=None,
-    newSize: int = 1000,
+    new_size: int = 1000,
 ):
-    """
-    @param plottingDict: from species names to their locations in the data array.
-    """
     logger = logging.getLogger(job_id).getChild("sub_plots")
-    number_of_plots = len(plottingDict)
+    number_of_plots = len(plotting_dict)
     logger.info("        (a) entered Plotter.sub_plots.")
     # create the figure and determine the 'layout' of the subplots.
     profiles = figure(
@@ -86,22 +84,25 @@ def sub_plots(
     sub_combined = combined.add_subplot(
         1, 1, 1, title="Combined True Profile", xlabel="time", ylabel="Concentration"
     )
-    if user_data is not None:
-        true_data = make_same_length(job_id, true_data, user_data)
-        # now that the shapes of the two datasets are aligned, we can sample them
-        user_data_sampled = user_data[:, :: user_data.shape[1] // newSize]
-        # pre-cache x-datapoints for userDataSet
+    data_x_user = None
+    user_data_sampled = None
+    if user_data is not None and true_data is not None:
+        true_data = align.make_same_length(job_id, true_data, user_data)
+        user_data_sampled = user_data[:, :: max(1, user_data.shape[1] // new_size)]
         data_x_user = user_data_sampled[0, :]
-    true_data_sampled = true_data[:, :: true_data.shape[1] // newSize]
-    data_x_true = true_data_sampled[0, :]
+    if true_data is not None:
+        true_data_sampled = true_data[:, :: max(1, true_data.shape[1] // new_size)]
+        data_x_true = true_data_sampled[0, :]
+    else:
+        true_data_sampled = None
+        data_x_true = None
     logger.info(
-        f"            Lossy-compressing true_data by selecting only {newSize} items, "
-        f"which means a span of every {true_data.shape[1] / newSize} items.\n"
-        f"            The true_data is compressed from {true_data.shape} to {true_data_sampled.shape}."
+        f"            Lossy-compressing true_data by selecting only {new_size} items, "
+        f"which means a span of every {true_data.shape[1] / new_size if true_data is not None else 'N/A'} items.\n"
+        f"            The true_data is compressed from {true_data.shape if true_data is not None else 'N/A'} to {true_data_sampled.shape if true_data_sampled is not None else 'N/A'}."
     )
     logger.info("            Drawing curves for:")
-    # now for every species to be plotted:
-    for subplot_id, (name, location) in enumerate(plottingDict.items(), start=1):
+    for subplot_id, (name, location) in enumerate(plotting_dict.items(), start=1):
         logger.info(f"              {name}")
         sub_individual = profiles.add_subplot(
             dimensions,
@@ -111,31 +112,30 @@ def sub_plots(
             xlabel="time",
             ylabel="[" + name + "]",
         )
-        # first true model:
-        data_y_this = true_data_sampled[location + 1, :]
-        if not (
-            if_SkipDrawingSpeciesWithZeroConcentrations
-            and not any(y != 0 for y in data_y_this)
-        ):
-            logger.info(
-                f"                True model for {name} at location {location + 1}."
-            )
-            sub_individual.plot(
-                data_x_true,
-                data_y_this,
-                colour[1],
-                label="True " + "[" + name + "]",
-                linestyle="-",
-            )
-            sub_combined.plot(
-                data_x_true,
-                data_y_this,
-                colour[subplot_id + 2],
-                label="True " + "[" + name + "]",
-                linestyle="-",
-            )
-        # then user model:
-        if user_data is not None:
+        if true_data_sampled is not None and data_x_true is not None:
+            data_y_this = true_data_sampled[location + 1, :]
+            if not (
+                if_SkipDrawingSpeciesWithZeroConcentrations
+                and not any(y != 0 for y in data_y_this)
+            ):
+                logger.info(
+                    f"                True model for {name} at location {location + 1}."
+                )
+                sub_individual.plot(
+                    data_x_true,
+                    data_y_this,
+                    colour[1],
+                    label="True " + "[" + name + "]",
+                    linestyle="-",
+                )
+                sub_combined.plot(
+                    data_x_true,
+                    data_y_this,
+                    colour[subplot_id + 2],
+                    label="True " + "[" + name + "]",
+                    linestyle="-",
+                )
+        if user_data_sampled is not None and data_x_user is not None:
             data_y_this = user_data_sampled[location + 1, :]
             if not (
                 if_SkipDrawingSpeciesWithZeroConcentrations
@@ -158,50 +158,13 @@ def sub_plots(
                     label="User " + "[" + name + "]",
                     linestyle="--",
                 )
-        # sub_individual.legend()
     sub_combined.legend()
     logger.info("        (c) Saving SVG: [Individual]")
-    # profiles.tight_layout()
     profiles = fake_writer(profiles)
     logger.info("                        [Combined]")
     combined = fake_writer(combined)
     logger.info("                        Done.")
     return profiles, combined
-
-
-def make_same_length(
-    job_id: str, true_data: np.ndarray, user_data: np.ndarray
-) -> np.ndarray:
-    """
-    Align the shape of the trueDataSet to that of the userDataSet (by extending or truncating trueDataSet).
-    """
-    logger = logging.getLogger(job_id).getChild("make_same_length")
-    if true_data.size == 0 or user_data.size == 0:
-        logger.error("            One of the datasets is empty. Cannot align shapes.")
-        return true_data
-    logger.info(
-        f"            Aligning shapes of userDataSet ({user_data.shape}) and trueDataSet ({true_data.shape})."
-    )
-    # if the trueDataSet is shorter, extend it to match the length of the userDataSet
-    if true_data.shape[1] < user_data.shape[1]:
-        length_difference = user_data.shape[1] - true_data.shape[1]
-        logger.info(
-            f"            The trueDataSet is shorter than the userDataSet, so we will extend it (by {length_difference} time steps) to match the length of the userDataSet."
-        )
-        final_concentrations = true_data[:, -1].reshape(-1, 1)
-        patch = np.repeat(final_concentrations, length_difference, axis=1)
-        true_data = np.append(
-            true_data,
-            patch,
-            axis=1,
-        )
-        logger.info(f"            The trueDataSet is now {true_data.shape}.")
-    elif true_data.shape[1] > user_data.shape[1]:
-        logger.info(
-            "            The trueDataSet is longer. Truncating it to match the length of the userDataSet."
-        )
-        true_data = true_data[:, : user_data.shape[1]]
-    return true_data
 
 
 if __name__ == "__main__":
