@@ -264,44 +264,27 @@ class Experiment:
         )
         return True
 
-    # calculates the rate constants for each reaction; using the species energy, the activated energy
     def find_rate_constant(self):
-
+        """
+        Calculates the rate constants for each reaction; using the species energy, the activated energy.
+        """
         # create the Er and Ep from the provided Es
         self.find_Er()
         self.find_Ep()
-        self.find_Ea()  # Ea depends on the Er/Ep so it needs to be calculated after them
+        # Ea depends on the Er/Ep, so it needs to be calculated after them:
+        self.find_Ea()
 
-        # fill the array with the Rate constant values
-        # formulas are:
+        # Fill the array with the Rate constant values. The formulas are:
         # e^{(Er - Ea) / RT}
         # e^{(Ep - Ea) / RT}
-        self.reactant_rate_constants = np.exp(
-            np.divide(
-                np.subtract(self.reactant_energy_array, self.activated_energy_array),
-                self.RT,
-            )
-        )
-        self.product_rate_constants = np.exp(
-            np.divide(
-                np.subtract(self.product_energy_array, self.activated_energy_array),
-                self.RT,
-            )
-        )
+        self.reactant_rate_constants = np.exp((self.reactant_energy_array - self.activated_energy_array) / self.RT)
+        self.product_rate_constants = np.exp((self.product_energy_array - self.activated_energy_array) / self.RT)
 
-        # fill the theoretical_Keq_array, which depends on the rate constant
-        self.find_theoretical_Keq_array()
+        # Fill the theoretical_Keq_array, which depends on the rate constant.
+        # Calculates an array of Keq's for each elementary reaction, based on the theoretical definition.
+        # This only makes sense for 'true' models, where the elementary reaction rates can be exactly calculated.
+        self.theoretical_Keq_array = self.reactant_rate_constants / self.product_rate_constants
 
-        # diagnostics
-
-        # logger.info( "\nEs " + HANDY.np_repr(self.species_energy_array)
-        # 	 + "\nEr " + HANDY.np_repr(self.reactant_energy_array)
-        # 	 + "\nEp " + HANDY.np_repr(self.product_energy_array)
-        # 	 + "\nEa " + HANDY.np_repr(self.activated_energy_array)
-        # 	 + "\nf  " + HANDY.np_repr(self.reactant_rate_constants)
-        # 	 + "\nb  " + HANDY.np_repr(self.product_rate_constants)
-        # 	 )
-        return True
 
     # precalculates the function that returns an array of reaction rates for each elementary reaction
     # used in the function get_reaction_rate()
@@ -320,11 +303,6 @@ class Experiment:
 
     # calculates an array of Keq's for each elementary reaction, BASED ON the theoretical defintion
     # this method is designed to be used for 'true' models, where the elementary reaction rates can be exactly calculated
-    def find_theoretical_Keq_array(self):
-        self.theoretical_Keq_array = np.divide(
-            self.reactant_rate_constants, self.product_rate_constants
-        )
-        return True
 
     def find_experimental_Keq_array(self, job_id: str = "unknown job") -> np.ndarray:
         """
@@ -503,9 +481,6 @@ class Experiment:
                 "				We reached our max_Keq_steps without finding an 'appropriate' Keq"
             )
 
-    # method description
-    def get_reaction_rate_array(self, conc):
-        return self.reaction_rate_function(conc)
 
     def slice_array_by_time(
         self,
