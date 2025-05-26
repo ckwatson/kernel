@@ -35,7 +35,7 @@ np.set_printoptions(suppress=True)
 
 
 # this object represents a rxn/experiment, a mixing of beakers, production of some reactants
-class experiment:
+class Experiment:
     __number_of_instances_of_self = 0
     stream = sys.stdout
     # ODE solver parameters
@@ -74,7 +74,7 @@ class experiment:
         # logger.info("Type of reaction mechanism", type(input_reaction_mechanism))
         # logger.info("Input conc", rxn_profile[0][:])
 
-        experiment.__number_of_instances_of_self += (
+        Experiment.__number_of_instances_of_self += (
             1  # count the creation of this object
         )
 
@@ -106,9 +106,9 @@ class experiment:
         # 		"\n")
 
         # as sorted single values
-        self.temp = float(input_temp + experiment.TEMPERATURE_CONVERSION_FACTOR)
-        self.RT = R * np.asfarray(input_temp + experiment.TEMPERATURE_CONVERSION_FACTOR)
-        self.scaling_factor = experiment.SCALING_FACTOR
+        self.temp = float(input_temp + Experiment.TEMPERATURE_CONVERSION_FACTOR)
+        self.RT = R * np.asfarray(input_temp + Experiment.TEMPERATURE_CONVERSION_FACTOR)
+        self.scaling_factor = Experiment.SCALING_FACTOR
         self.Keq_threshold = Keq_threshold if (Keq_threshold is not None) else pow(10, -7)
         self.mass_balance_threshold = (
             mass_balance_threshold if (mass_balance_threshold is not None) else pow(10, -7)
@@ -207,7 +207,7 @@ class experiment:
 
     # any code that happens just before the object is deleted
     def __del__(self):
-        experiment.__number_of_instances_of_self -= 1
+        Experiment.__number_of_instances_of_self -= 1
         # logger.info("this is the thing I do after I'm dead")
 
     # this method  is invoked when str() is called on an experiment_class object
@@ -246,10 +246,10 @@ class experiment:
     # the ENERGY_BARRIER is a dictionary so that each elementary reaction in a puzzle can have its own tailored barrier
     def find_Ea(self):
         Ea_scaling_factor = (
-            experiment.ENERGY_BARRIER_DICTIONARY["medium"]
+            Experiment.ENERGY_BARRIER_DICTIONARY["medium"]
             if (self.activated_energy_array == None)
             else [
-                experiment.ENERGY_BARRIER_DICTIONARY[i]
+                Experiment.ENERGY_BARRIER_DICTIONARY[i]
                 for i in self.activated_energy_array
             ]
         )
@@ -404,13 +404,13 @@ class experiment:
 
         # the 'calculation' loop
         logger.info("				Calculating... ")
-        for current_Keq_step in range(1, experiment.max_Keq_steps + 1):
+        for current_Keq_step in range(1, Experiment.max_Keq_steps + 1):
 
             # if the time_array is not empty then we want to continue from the end of it, otherwise start at 0
             start_time = self.time_array[-1] if (self.time_array is not None) else 0
             # generate time points over which the odeint solves the coupled ode's, i need refactor this part to be a lot cleaner
             self.time_slicee = np.linspace(
-                start_time, start_time + experiment.step_size, num=experiment.num_steps
+                start_time, start_time + Experiment.step_size, num=Experiment.num_steps
             )
 
             # solve the couple ode's, with or with extra output
@@ -420,8 +420,8 @@ class experiment:
                     ode_conc,
                     self.time_slicee,
                     full_output=diagnostic_output,
-                    atol=experiment.abserr,
-                    rtol=experiment.relerr,
+                    atol=Experiment.abserr,
+                    rtol=Experiment.relerr,
                     ixpr=True,
                 )
             else:
@@ -429,8 +429,8 @@ class experiment:
                     condition_elementary,
                     ode_conc,
                     self.time_slicee,
-                    atol=experiment.abserr,
-                    rtol=experiment.relerr,
+                    atol=Experiment.abserr,
+                    rtol=Experiment.relerr,
                     ixpr=True,
                 )
             # only compare the previous Keq with the current Keq if we have a previous Keq
@@ -576,8 +576,8 @@ class experiment:
         slice_of_concentrations = self.slice_array_by_time(
             job_id=job_id,
             array_to_slice=self.reaction_profile,
-            start=experiment.RATE_CONSTANT_EXTRACTION_START_POINT,
-            end=experiment.RATE_CONSTANT_EXTRACTION_END_POINT,
+            start=Experiment.RATE_CONSTANT_EXTRACTION_START_POINT,
+            end=Experiment.RATE_CONSTANT_EXTRACTION_END_POINT,
         )
         logger.debug(f"               Concentrations over the selected period of time is in an array of shape {slice_of_concentrations.shape}"
             # + ":\n                 " + HANDY.np_repr(slice_of_concentrations).replace("\n", "\n                 ")
@@ -586,8 +586,8 @@ class experiment:
         slice_of_time = self.slice_array_by_time(
             job_id=job_id,
             array_to_slice=self.time_array,
-            start=experiment.RATE_CONSTANT_EXTRACTION_START_POINT,
-            end=experiment.RATE_CONSTANT_EXTRACTION_END_POINT,
+            start=Experiment.RATE_CONSTANT_EXTRACTION_START_POINT,
+            end=Experiment.RATE_CONSTANT_EXTRACTION_END_POINT,
         )
 
         # Calculate the change in concentration over time (dSdt)
@@ -708,7 +708,7 @@ class experiment:
             np.zeros((self.number_of_reactions, self.number_of_reactions)), dtype=float
         )
         masked_e_values = ma.masked_less(
-            e_values, experiment.EIGENVALUE_TOLERANCE
+            e_values, Experiment.EIGENVALUE_TOLERANCE
         )  # mask any values less than our tolerance parameter
 
         # logger.info("Eval shape: " + str(e_values.shape)

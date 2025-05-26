@@ -28,7 +28,7 @@ graph = os.path.join("Graphs" + os.sep)
 # this function executes the necessary mathematical operations to find the Keq array - i.e. equilibrates the reaction
 
 
-def equilibrate(job_id: str, input_model: experiment_class.experiment, diag=False):
+def equilibrate(job_id: str, input_model: experiment_class.Experiment, diag=False):
     # the meat and potatoes
     input_model.find_rate_constant()
     input_model.find_reaction_rate_function()
@@ -63,7 +63,7 @@ def run_true_experiment(
     ]
 
     # this is the experiment object that represents the "actual reaction"
-    true_model = experiment_class.experiment(
+    true_model = experiment_class.Experiment(
         puzzle,
         condition.reaction_temperature,
         input_time=[0.0],
@@ -164,7 +164,7 @@ def preequilibrate_reagent(
 
         # create the experiment object, this object handles all the necessary mathematical calculations to determine
         # how much of each species is created, consumed during dissociation/pre-equilibration
-        pre_equil_model = experiment_class.experiment(
+        pre_equil_model = experiment_class.Experiment(
             mechanism,
             condition.reagent_temperatures[reagent_name],
             rxn_profile=np.array([starting_concentrations]),
@@ -223,7 +223,7 @@ def run_proposed_experiment(
 ) -> Optional[np.ndarray]:
     logger = logging.getLogger(job_id).getChild("run_proposed_experiment")
 
-    proposed_model = experiment_class.experiment(
+    proposed_model = experiment_class.Experiment(
         solution,
         condition.reaction_temperature,
         input_time=data[0],
