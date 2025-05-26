@@ -317,7 +317,7 @@ class Experiment:
         logger = logging.getLogger(job_id).getChild("find_reaction_profile")
 
         # the 'calculation' step
-        def condition_elementary(conc):
+        def condition_elementary(conc, t=None):
             # [a,b,c,d,e](powered 'down') = they're pushed down [x,0,0,0,0] the x locations of a 2D array
             # but then multiplied across the other dimension, so [a1,b1,c1,d1,e1]
             # transpose the first array(rotate southwest at leftmost point)
