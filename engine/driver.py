@@ -290,7 +290,6 @@ def run_proposed_experiment(
         diagnostic_output=diag,
     )
     proposed_model.find_flat_region(job_id=job_id, remove=True)
-    # TODO: ??? Missing a species????
     data = [
         ["Starting Concentrations (mol)"] + input_concentrations,
         ["Reactant Rate Constants"]
