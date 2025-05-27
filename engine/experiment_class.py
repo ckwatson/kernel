@@ -466,6 +466,11 @@ class Experiment:
                 "               No slice input provided, returning the full reaction profile."
             )
             return array_to_slice
+        if self.time_array is None:
+            logger.info(
+                "               No time array available, returning the full reaction profile."
+            )
+            return array_to_slice
         start_time = float(start)
         end_time = float(end)
         # Boundary checks for the start and end times.
