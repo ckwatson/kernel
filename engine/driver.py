@@ -75,14 +75,17 @@ def run_true_experiment(
     )
     equilibrate(job_id, true_model, diag=diag)  # the magical math happens
 
+    data = [
+        ["Starting Concentrations (mol)"] + starting_concentrations,
+        ["Reactant Rate Constants"] + true_model.reactant_rate_constants.tolist(),
+        ["Product Rate Constants"] + true_model.product_rate_constants.tolist(),
+    ]
+    if true_model.theoretical_Keq_array is not None:
+        data.append(["Theoretical K_eq"] + true_model.theoretical_Keq_array.tolist())
+    if true_model.experimental_Keq_array is not None:
+        data.append(["Experimental K_eq"] + true_model.experimental_Keq_array.tolist())
     table = tabulate(
-        [
-            ["Starting Concentrations (mol)"] + starting_concentrations,
-            ["Reactant Rate Constants"] + true_model.reactant_rate_constants.tolist(),
-            ["Product Rate Constants"] + true_model.product_rate_constants.tolist(),
-            ["Theoretical K_eq"] + true_model.theoretical_Keq_array.tolist(),
-            ["Experimental K_eq"] + true_model.experimental_Keq_array.tolist(),
-        ],
+        data,
         headers=sorted_species_names,
         floatfmt=".4g",
         tablefmt="github",
@@ -288,14 +291,18 @@ def run_proposed_experiment(
     )
     proposed_model.find_flat_region(job_id=job_id, remove=True)
     # TODO: ??? Missing a species????
+    data = [
+        ["Starting Concentrations (mol)"] + input_concentrations,
+        ["Reactant Rate Constants"]
+        + proposed_model.reactant_rate_constants.tolist(),
+        ["Product Rate Constants"] + proposed_model.product_rate_constants.tolist(),
+    ]
+    if proposed_model.theoretical_Keq_array is not None:
+        data.append(
+            ["Theoretical K_eq"] + proposed_model.theoretical_Keq_array.tolist()
+        )
     table = tabulate(
-        [
-            ["Starting Concentrations (mol)"] + input_concentrations,
-            ["Reactant Rate Constants"]
-            + proposed_model.reactant_rate_constants.tolist(),
-            ["Product Rate Constants"] + proposed_model.product_rate_constants.tolist(),
-            ["Experimental K_eq"] + proposed_model.experimental_Keq_array.tolist(),
-        ],
+        data,
         headers=sorted_species_names,
         floatfmt=".4g",
         tablefmt="github",

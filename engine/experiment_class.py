@@ -696,7 +696,7 @@ class Experiment:
 
         # print out the forward rate constants
         f_guess = np.asfarray(M_inverse * X)
-        b_guess = f_guess / self.experimental_Keq_array[:, np.newaxis]
+        b_guess = f_guess / emKeq[:, np.newaxis]
         self.reactant_rate_constants = np.nan_to_num(f_guess.flatten())
         self.product_rate_constants = np.nan_to_num(b_guess.flatten())
 
@@ -758,6 +758,11 @@ class Experiment:
         @return cutoff: The number of time-steps to keep in the reaction profile after removing the flat region.
         """
         logger = logging.getLogger(job_id).getChild("remove_flat_region")
+        if self.time_array is None or self.reaction_profile is None:
+            logger.warning(
+                "               No time array or reaction profile available. Cannot find flat region."
+            )
+            return 0
         # Sample 1% moments of the reaction profile (but no more than 100 and at least 10, unless we don't have
         # that many time steps, in each case we use all time steps) to find the flat region.
         N = self.time_array.shape[0]
@@ -782,7 +787,7 @@ class Experiment:
                 break
         if not has_flat_region:
             logger.info("               No flat region found in the reaction profile.")
-            return
+            return 0
         cutoff = stride * i
         logger.info(
             f"               Concentrations approximately reach equilibrium at {i / len(sampled_profile) * 100:.2f}% "
