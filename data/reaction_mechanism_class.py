@@ -4,8 +4,9 @@
 """module for the class reagent"""
 
 import os
+from typing import Optional, List
+
 import numpy as np
-from collections import OrderedDict
 
 # imports from the ckwatson package
 from . import json_base_class
@@ -19,6 +20,9 @@ class reaction_mechanism(json_base_class.Json_base):
     # file_prefix = os.path.join(os.getcwd(), 'Folder1', 'Folder2', etc....)
     file_prefix = os.path.join(os.getcwd(), "Data")
     file_suffix = ".rxn"
+
+    # TODO: Not initialized?
+    transition_state_energies: Optional[List[str]] = None
 
     @staticmethod
     def test():
@@ -161,7 +165,6 @@ class reaction_mechanism(json_base_class.Json_base):
 
     # this function is overloaded by subclasses
     def prepare_load(self, loaded_dict={}):
-        import sys
 
         # print("The dict:", dict([(x, 5) for x in loaded_dict['coefficient_dict'].keys()]), file=sys.stderr)
         loaded_dict["molecular_species_dict"] = dict(

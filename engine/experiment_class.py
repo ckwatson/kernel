@@ -100,12 +100,7 @@ class Experiment:
         # Size of (self.number_of_species)
         self.species_energy_array = input_reaction_mechanism.get_energy_set()
 
-        # logger.info("energy array", self.species_energy_array)
-        self.activated_energy_array = (
-            (input_reaction_mechanism.transition_state_energies)
-            if ("transition_state_energies" in input_reaction_mechanism.__dict__)
-            else None
-        )
+        self.activated_energy_array = input_reaction_mechanism.transition_state_energies
         self.reactant_energy_array = None
         self.product_energy_array = None
 
@@ -216,14 +211,13 @@ class Experiment:
     # calculates the activation energies, where the values are ENERGY_BARRIER plus the max of (Er, Ep) for each reaction
     # the ENERGY_BARRIER is a dictionary so that each elementary reaction in a puzzle can have its own tailored barrier
     def find_Ea(self):
-        Ea_scaling_factor = (
-            Experiment.ENERGY_BARRIER_DICTIONARY["medium"]
-            if (self.activated_energy_array == None)
-            else [
+        if self.activated_energy_array is None:
+            Ea_scaling_factor = Experiment.ENERGY_BARRIER_DICTIONARY["medium"]
+        else:
+            Ea_scaling_factor = [
                 Experiment.ENERGY_BARRIER_DICTIONARY[i]
                 for i in self.activated_energy_array
             ]
-        )
         self.activated_energy_array = np.add(
             np.maximum(self.reactant_energy_array, self.product_energy_array),
             Ea_scaling_factor,
