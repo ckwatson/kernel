@@ -2,7 +2,7 @@
 
 import io
 import logging
-from typing import Dict
+from typing import Dict, Optional
 
 import numpy as np
 from matplotlib.pyplot import figure
@@ -16,8 +16,7 @@ from matplotlib import cm
 import matplotlib
 
 matplotlib.use("agg")
-
-if_SkipDrawingSpeciesWithZeroConcentrations = True
+plt.style.use("ggplot")
 
 
 def fake_writer(fig):
@@ -33,9 +32,10 @@ def fake_writer(fig):
 def sub_plots(
     job_id: str,
     plotting_dict: Dict[str, int],
-    true_data=None,
-    user_data=None,
+    true_data: Optional[np.ndarray] = None,
+    user_data: Optional[np.ndarray] = None,
     new_size: int = 1000,
+    skip_drawing_species_with_zero_concentrations: bool = True,
 ):
     logger = logging.getLogger(job_id).getChild("sub_plots")
     number_of_plots = len(plotting_dict)
@@ -84,7 +84,7 @@ def sub_plots(
         if true_data_sampled is not None and data_x_true is not None:
             data_y_this = true_data_sampled[location + 1, :]
             if not (
-                if_SkipDrawingSpeciesWithZeroConcentrations
+                skip_drawing_species_with_zero_concentrations
                 and not any(y != 0 for y in data_y_this)
             ):
                 logger.info(
@@ -107,7 +107,7 @@ def sub_plots(
         if user_data_sampled is not None and data_x_user is not None:
             data_y_this = user_data_sampled[location + 1, :]
             if not (
-                if_SkipDrawingSpeciesWithZeroConcentrations
+                skip_drawing_species_with_zero_concentrations
                 and not any(y != 0 for y in data_y_this)
             ):
                 logger.info(
