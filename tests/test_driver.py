@@ -1,7 +1,12 @@
-from kernel.engine.driver import preequilibrate_reagent, run_proposed_experiment
+from kernel.engine.driver import (
+    preequilibrate_reagent,
+    run_proposed_experiment,
+    run_true_experiment,
+)
 from kernel.data.condition_class import Condition
 from kernel.data.reaction_mechanism_class import reaction_mechanism
 from kernel.data.solution_class import solution
+from kernel.data.puzzle_class import puzzle
 import numpy as np
 
 
@@ -14,6 +19,31 @@ def make_simple_solution():
     num_rxn = 1
     num_species = 2
     return solution(num_rxn, num_species, species, coef, reag_enrg)
+
+
+def make_simple_puzzle():
+    # Simple reversible reaction: A <-> B
+    species = ["A", "B"]
+    coef = np.array([[-1.0, 1.0]])
+    reag_enrg = {"A": 0.0, "B": 1000.0}
+    num_rxn = 1
+    num_species = 2
+    rxn_array = coef
+    # For puzzle, need reagent_dict: {reagent_name: reaction_mechanism}
+    reagent_name = "A"
+    reagent_mech = reaction_mechanism(
+        num_rxn, num_species, species, rxn_array, reag_enrg
+    )
+    reagent_dict = [(reagent_name, reagent_mech)]
+    # Pass all required args for reaction_mechanism: num_rxn, num_species, species, rxn_array, reagEnrg
+    return puzzle(
+        num_rxn,
+        num_species,
+        species,
+        rxn_array,
+        reag_enrg,
+        reagent_dictionary=reagent_dict,
+    )
 
 
 def test_preequilibrate():
@@ -77,3 +107,31 @@ def test_run_proposed_experiment_normal_case():
     assert np.all(a_conc >= 0) and np.all(b_conc >= 0)
     assert a_conc[0] > a_conc[-1]
     assert b_conc[0] < b_conc[-1]
+
+
+def test_run_true_experiment_normal_case():
+    pz = make_simple_puzzle()
+    rxn_temp = 300.0
+    reagents = ["A"]
+    reagent_temps = [300.0]
+    reagent_concs = [1.0]
+    molecule_concs = [1.0, 0.0]
+    cond = Condition(
+        rxn_temp,
+        pz.get_name_set(),
+        reagents,
+        reagent_temps,
+        reagent_concs,
+        molecule_concs,
+    )
+    result = run_true_experiment("test_job", pz, cond, diag=False)
+    assert result is not None
+    # Check output shape: (n_species+1, n_timepoints)
+    assert result.shape[0] == 3 and result.shape[1] >= 2
+    # Check that concentrations are non-negative and monotonic (A decreases, B increases)
+    a_conc = result[1]
+    b_conc = result[2]
+    tol = 1e-6
+    assert np.all(a_conc >= -tol) and np.all(b_conc >= -tol)
+    assert a_conc[0] > a_conc[-1] - tol
+    assert b_conc[0] < b_conc[-1] + tol
