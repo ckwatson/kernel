@@ -16,7 +16,6 @@ from matplotlib import cm
 import matplotlib
 
 matplotlib.use("agg")
-plt.style.use("ggplot")
 
 
 def fake_writer(fig):
@@ -74,59 +73,90 @@ def sub_plots(
         f"            The true_data is compressed from {true_data.shape if true_data is not None else 'N/A'} to {true_data_sampled.shape if true_data_sampled is not None else 'N/A'}."
     )
     logger.info("            Drawing curves for:")
-    color_map = cm.get_cmap("tab10")
+    # Assign a unique color to each name using a colormap
+    color_map = cm.get_cmap("tab20")
+    name_list = list(plotting_dict.keys())
+    num_colors = 20  # tab20 always has 20 distinct colors
+    color_dict = {name: color_map(i % num_colors) for i, name in enumerate(name_list)}
     for subplot_id, (name, location) in enumerate(plotting_dict.items()):
         logger.info(f"              {name}")
         ax = axes[subplot_id]
         ax.set(
             title=f"Concentration Profile of {name}", xlabel="time", ylabel=f"[{name}]"
         )
-        if true_data_sampled is not None and data_x_true is not None:
-            data_y_this = true_data_sampled[location + 1, :]
-            if not (
+        color = color_dict[name]
+        y_true = (
+            true_data_sampled[location + 1, :]
+            if (true_data_sampled is not None and data_x_true is not None)
+            else None
+        )
+        y_user = (
+            user_data_sampled[location + 1, :]
+            if (user_data_sampled is not None and data_x_user is not None)
+            else None
+        )
+        # Only fill if both are available, not skipped, and shapes match
+        if (
+            y_true is not None
+            and y_user is not None
+            and data_x_true is not None
+            and data_x_user is not None
+            and y_true.shape == y_user.shape == data_x_true.shape == data_x_user.shape
+            and not (
                 skip_drawing_species_with_zero_concentrations
-                and not any(y != 0 for y in data_y_this)
-            ):
-                logger.info(
-                    f"                True model for {name} at location {location + 1}."
-                )
-                ax.plot(
-                    data_x_true,
-                    data_y_this,
-                    color=color_map(0),
-                    label="True [" + name + "]",
-                    linestyle="-",
-                )
-                ax_combined.plot(
-                    data_x_true,
-                    data_y_this,
-                    color=color_map((subplot_id + 2) % 10),
-                    label="True [" + name + "]",
-                    linestyle="-",
-                )
-        if user_data_sampled is not None and data_x_user is not None:
-            data_y_this = user_data_sampled[location + 1, :]
-            if not (
-                skip_drawing_species_with_zero_concentrations
-                and not any(y != 0 for y in data_y_this)
-            ):
-                logger.info(
-                    f"                User model for {name} at location {location + 1}."
-                )
-                ax.plot(
-                    data_x_user,
-                    data_y_this,
-                    color=color_map(1),
-                    label="User [" + name + "]",
-                    linestyle="--",
-                )
-                ax_combined.plot(
-                    data_x_user,
-                    data_y_this,
-                    color=color_map((subplot_id + 2) % 10),
-                    label="User [" + name + "]",
-                    linestyle="--",
-                )
+                and not any(y != 0 for y in y_true)
+                and not any(y != 0 for y in y_user)
+            )
+        ):
+            x_fill = np.array(data_x_true, dtype=float)
+            y1_fill = np.array(y_true, dtype=float)
+            y2_fill = np.array(y_user, dtype=float)
+            ax.fill_between(x_fill, y1_fill, y2_fill, color=color, alpha=0.2)  # type: ignore
+            ax_combined.fill_between(x_fill, y1_fill, y2_fill, color=color, alpha=0.2)  # type: ignore
+        # Plot true line
+        if y_true is not None and not (
+            skip_drawing_species_with_zero_concentrations
+            and not any(y != 0 for y in y_true)
+        ):
+            logger.info(
+                f"                True model for {name} at location {location + 1}."
+            )
+            ax.plot(
+                data_x_true,
+                y_true,
+                label=f"True [{name}]",
+                linestyle="-",
+                color=color,
+            )
+            ax_combined.plot(
+                data_x_true,
+                y_true,
+                label=f"True [{name}]",
+                linestyle="-",
+                color=color,
+            )
+        # Plot user line
+        if y_user is not None and not (
+            skip_drawing_species_with_zero_concentrations
+            and not any(y != 0 for y in y_user)
+        ):
+            logger.info(
+                f"                User model for {name} at location {location + 1}."
+            )
+            ax.plot(
+                data_x_user,
+                y_user,
+                label=f"Your [{name}]",
+                linestyle="--",
+                color=color,
+            )
+            ax_combined.plot(
+                data_x_user,
+                y_user,
+                label=f"Your [{name}]",
+                linestyle="--",
+                color=color,
+            )
         ax.legend()
     ax_combined.legend()
     logger.info("        (c) Saving SVG: [Individual]")
