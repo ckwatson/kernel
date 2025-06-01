@@ -637,10 +637,9 @@ class Experiment:
         logger.info(f"               M is a {M.shape} array.")
 
         # construct the X matrix
-        X = np.matrix(np.zeros((self.number_of_reactions, 1)), dtype=float)
+        X = np.zeros((self.number_of_reactions, 1), dtype=float)
         for a in range(self.number_of_reactions):
             X[a] = np.sum(dSdt[:, 0, :] * A[:, a, :])
-            # X[a] = np.sum(np.sum((dSdt[:,0,:] * A[:,a,:]), axis = 1), axis = 0)
 
         # logger.info("M: \n" + str(M))
         # calculate the eigenvalues and eigenvectors
@@ -675,8 +674,8 @@ class Experiment:
             )
 
         # calculate the inverse of the M matrix
-        M_inverse = np.matrix(
-            np.zeros((self.number_of_reactions, self.number_of_reactions)), dtype=float
+        M_inverse = np.zeros(
+            (self.number_of_reactions, self.number_of_reactions), dtype=float
         )
         masked_e_values = ma.masked_less(
             e_values, Experiment.EIGENVALUE_TOLERANCE
@@ -693,9 +692,8 @@ class Experiment:
                 )
 
         M_inverse = np.nan_to_num(M_inverse)
-
         # print out the forward rate constants
-        f_guess = np.asfarray(M_inverse * X)
+        f_guess = np.asarray(M_inverse @ X)
         b_guess = f_guess / emKeq[:, np.newaxis]
         self.reactant_rate_constants = np.nan_to_num(f_guess.flatten())
         self.product_rate_constants = np.nan_to_num(b_guess.flatten())
