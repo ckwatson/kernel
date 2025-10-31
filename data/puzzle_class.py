@@ -21,7 +21,7 @@ class puzzle(reaction_mechanism_class.reaction_mechanism):
         os.getcwd(),
         "Puzzles",
     )
-    file_suffix = ".puz"
+    file_suffix = ".json"
 
     @staticmethod
     def test():
